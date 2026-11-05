@@ -12,6 +12,10 @@ import (
 // Declare it as a field with the tag `hidden:""`, so it doesn't clutter the help.
 // The name of the flag comes from the name of the field
 // (e.g. field UsageSpec gives flag --usage-spec).
+//
+// In a mise task completed paths are relative to the shell's directory,
+// so the program has to resolve paths from the user
+// relative to MISE_ORIGINAL_CWD when it is set (see README).
 type Flag bool
 
 // BeforeReset implements the Kong hook.
