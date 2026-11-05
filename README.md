@@ -13,14 +13,17 @@
 
 ## Usage
 
-Add a hidden flag to the Kong CLI struct:
+Add a flag to the Kong CLI struct:
 
 ```go
 type CLI struct {
     // ...
-    UsageSpec kongusage.Flag `hidden:"" help:"Print usage spec (KDL) of this CLI."`
+    UsageSpec kongusage.Flag
 }
 ```
+
+With `kong.DefaultEnvars` add the tag `env:"-"` to the flag:
+only the command line sets it, so help should not show a variable for it.
 
 Then the program prints its [usage spec](https://usage.jdx.dev/) in KDL by `--usage-spec`.
 
@@ -75,8 +78,8 @@ while the task runs in its `dir`, by default the mise config root directory,
 so a relative path completed in another directory is wrong for the program.
 A program which takes paths from the user as a task has to resolve them
 relative to `MISE_ORIGINAL_CWD` when it is set,
-unless the task run in the shell's directory (`dir = '{{cwd}}'`)
-or user runs the task only from mise config root directory.
+unless the task runs in the shell's directory (`dir = '{{cwd}}'`)
+or the user runs the task only from the mise config root directory.
 
 ## Example: compatibility check
 

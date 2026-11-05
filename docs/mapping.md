@@ -2,12 +2,10 @@
 
 How kongusage maps a [Kong](https://github.com/alecthomas/kong) CLI
 to a [usage spec](https://usage.jdx.dev/spec/), and which Kong features are lost.
-It is correct for Kong v1.17.0, usage 6.4.0–7.2.0 and mise 2026.8.13–2026.11.0.
+It is correct for Kong v1.17.0, usage 6.12.0–7.2.0 and mise 2026.9.17–2026.11.0.
 
 The input is the Kong model: the `kong.Application` tree built by `kong.New`.
-The output depends on the profile (`spec` or `mise`) and on the target usage version,
-see [Design](design.md).
-A key marked "usage ≥ X" is emitted only for target versions which know it.
+The output is a spec for minimal supported usage version (6.12.0).
 Behaviour of usage and mise referred to below is described in [usage](usage.md)
 and [mise](mise.md).
 
@@ -38,6 +36,8 @@ Kong applies these before the model is read, so they need no mapping:
 - Command → `cmd "<name>"`; `Help` → `help`; `Detail` → `long_help`.
 - `aliases:"a,b"` → `alias "a" "b"`, visible as in Kong's help.
 - `hidden:""` → `hide=#true`.
+- Order of declaration → `display_order=<index>` among siblings, unless disabled in `Config`:
+  terminal help of usage otherwise sorts commands by name.
 - A required subcommand → `subcommand_required=#true`.
   Kong requires one when the node has a non-hidden child command, no default command,
   and no `Run` method (on the value or on its address).
@@ -54,6 +54,10 @@ Kong applies these before the model is read, so they need no mapping:
   (parsing ignores `IsBool()`, so a custom type reporting it may still take a value).
 - `help:"…"` → `help`.
   The model holds the text without the `($ENV)` suffix, which Kong adds when it prints help.
+- `${default}`, `${enum}`, `${env}` in `help` (`Value.OrigHelp`) →
+  `hide_default_value=#true`, `hide_possible_values=#true`, `hide_env=#true`:
+  otherwise terminal help of usage repeats the value after the text
+  (its Markdown docs show it anyway).
 - `required:""` → `required=#true`; `optional:""` → nothing.
 - `default:"X"` → `default="X"`, or `default=#true`/`#false` for a bool flag.
 - `hidden:""` → `hide=#true`.
@@ -72,7 +76,7 @@ Kong applies these before the model is read, so they need no mapping:
   `required:""` on any member makes Kong require every member,
   so every member gets `required=#true`.
   A flag in several `and` groups is required by Kong only if the last group requires it
-  (its README implies every group): `spec` follows the README, `mise` the model.
+  (its README implies every group): the spec follows the model.
 - `lastwins:"g"` → `overrides` on every member naming every other member.
 - `xor:"g"`, `lastwins:"g"` with `required:""`:
   see [Flag relationship groups](#flag-relationship-groups).
@@ -89,7 +93,7 @@ Kong applies these before the model is read, so they need no mapping:
   Kong positionals are required unless `optional:""` or `default:"…"` is set.
 - Slice or map positional → `arg "<name>..."` or `arg "[name]..."`, without `delimiter`:
   Kong does not split positionals by `sep`, contrary to its README.
-- `default`, `env`, `enum` → as for flags.
+- `help`, `default`, `env`, `enum` → as for flags.
 - `hidden:""`: see [Hidden positional arguments](#hidden-positional-arguments).
 
 ## Values
@@ -198,7 +202,7 @@ Chosen at the root:
 
 ```kdl
 default_subcommand "serve"
-default_subcommand_flags #true // only for default:"withargs"; usage ≥ 6.9.0
+default_subcommand_flags #true // only for default:"withargs"
 ```
 
 usage routes an unknown first word to it
@@ -207,11 +211,12 @@ marks it `(default)` in help, and root completion also offers its flags.
 These are spec-level nodes, which have no effect through a mise mount.
 Below the root: see [Kong only](#default-commands-below-the-root).
 
-Rejected: `default_subcommand_on_empty #true` (usage ≥ 6.11.0).
+Rejected: `default_subcommand_on_empty #true`.
 It would also select the default command on an empty command line, exactly as Kong does,
 but it breaks root completion in usage 7.1.3–7.2.0:
 `x <Tab>` offers the default command's arguments instead of commands.
-It is to be emitted for consumer versions which fix this; a test detects the fix.
+It is to be emitted once the oldest supported usage version fixes this;
+a test detects the fix.
 
 ### Help flag
 
@@ -225,18 +230,19 @@ which its parser refuses.
 Chosen: the built-ins are disabled, and Kong's help flag is declared as a global flag.
 
 ```kdl
-disable_help #true
+disable_help_flag #true
 disable_help_subcommand #true
 flag "-h --help" action="help" global=#true help="Show context-sensitive help."
-cmd "sub" disable_help_subcommand=#true { cmd "leaf"; }
+cmd "sub" disable_help_flag=#true disable_help_subcommand=#true {
+    cmd "leaf" disable_help_flag=#true
+}
 ```
 
-`spec` disables the built-in flags by `disable_help`,
-`mise` by `disable_help_flag` on every command instead,
-because spec-level nodes have no effect through a mount,
-and `disable_help_flag` is not inherited.
-Neither removes the listed `help` subcommand, so `disable_help_subcommand` is emitted
-on every command with subcommands in both profiles.
+The built-in flags are disabled by `disable_help_flag` on every command, as it is not inherited.
+Spec-level `disable_help` would give the same docs, completion and parsing,
+but has no effect through a mount.
+Neither removes the listed `help` subcommand,
+so `disable_help_subcommand` is emitted on every command with subcommands.
 The flag is omitted for `NoDefaultHelp()`.
 
 usage then accepts and completes only the spellings Kong accepts
@@ -292,21 +298,42 @@ without quotes and the `,...`/`;...` tail, which usage shows by itself:
 `--tags <TAGS>`, `--env <STRING>`, `--map <KEY=VALUE>`.
 Positionals use their name, as in Kong.
 
+Kong uses the default value as the placeholder when there is no `placeholder`;
+kongusage does not, as usage shows the default by itself
+and a value name changes completion:
+such a flag gets the placeholder Kong would give it without the default,
+i.e. `KEY=VALUE` for a map, otherwise the name of its Go type or of the flag in upper case
+(an `int` with `default:"8080"` gives `--port <INT>`, Kong's help shows `--port=8080`).
+
+A placeholder may be any text, but usage refuses the whole spec
+when a value name has whitespace or `...`/`…`,
+and takes `<<FILE>>` as the name `<FILE>`, which breaks completion by the name.
+So one pair of `<>` around the placeholder is removed,
+and a placeholder which is empty or still has characters usage refuses
+is replaced the same way as one derived from the default.
+
+Such a fix of a placeholder is logged by `CheckSpec` ([Design](design.md)),
+a placeholder which is not used because it is the default is not.
+
 usage infers the completion of a value without its own `complete` from its name,
 so a placeholder like `HOSTNAME`, `URL` or `DIR`, or a positional named `url`,
 changes completion (see [usage](usage.md#completion-of-values)).
-This is accepted in both profiles;
-`complete type="unknown"` (usage ≥ 6.12.0) would prevent it in `mise`.
+This is accepted, although `complete type="unknown"` would prevent it.
 
-Rejected: the `placeholder` tag, otherwise the flag name in upper case:
-simpler, but differs from Kong's help.
+Rejected:
+
+- The `placeholder` tag, otherwise the flag name in upper case:
+  simpler, but differs from Kong's help more often.
+- The default as the value name, as in Kong's help:
+  repeats the default and may change completion (`default:"none"` completes nothing).
+- Characters usage refuses replaced by `_` (`<a_b>`): a name neither Kong nor the author uses.
 
 ### Completion of values
 
 usage completes files for a value without `complete`, `choices`
 or a value name it recognises.
 
-Chosen: `complete` by the Go type (usage ≥ 6.12.0, older targets get none):
+Chosen: `complete` by the Go type:
 
 - `type="none"` for numbers, `time.Duration`, `time.Time`, `*url.URL` and counters;
 - `type="dir"` for `existingdir` and `kong.ChangeDirFlag`
@@ -328,7 +355,7 @@ Rejected:
 
 - `type="dir"` only: numbers would complete files.
 - Nothing, relying on value names: same.
-- Completion computed for the task's directory by `complete run=` (`mise` only):
+- Completion computed for the directory of a mise task by `complete run=`:
   postponed, probably not worth its cost.
 
 ### Flag relationship groups
@@ -349,7 +376,7 @@ A group of one flag is skipped: usage needs at least two members.
 `required` of the members themselves is not emitted.
 Kong's README says `required` on members requires the group,
 but Kong requires it only when at least two members are `required` (issue #516):
-`spec` emits a required group when any member is `required`, `mise` when two are.
+the spec follows Kong, so a group is `required` when at least two members are.
 
 Rejected: pairwise `conflicts` for `xor`: cannot express "required", grows quadratically.
 

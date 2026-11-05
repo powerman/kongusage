@@ -1,6 +1,6 @@
 # usage
 
-Behaviour of [usage](https://usage.jdx.dev/) 6.4.0–7.2.0 which kongusage depends on.
+Behaviour of [usage](https://usage.jdx.dev/) 6.12.0–7.2.0 which kongusage depends on.
 Undocumented behaviour is marked so: it may change in any release.
 
 ## Consumers of a spec
@@ -12,7 +12,7 @@ Undocumented behaviour is marked so: it may change in any release.
 - Compatibility: `usage diff` compares two specs by their parsing semantics
   and exits 1 on a breaking change.
 
-usage-lib refuses a spec with an unknown key, so no consumer can use it at all.
+usage-lib refuses a spec with an unknown node or property, so no consumer can use it at all.
 
 ## Mount
 
@@ -56,12 +56,13 @@ The name of a positional is used the same way (`arg "[url]"` completes nothing).
 - `complete type="unknown"` completes files whatever the value name is.
 - `complete type="dir"` completes directories, but files when no directory matches,
   contrary to the docs.
-- `complete` inside `flag` and `arg` needs 6.12.0.
 
 ## Built-in flags and commands
 
 - `-h`, `--help` and `-?` exist on every command;
   `disable_help` removes them everywhere, `disable_help_flag` on one command only.
+  `usage diff` takes `--help` as accepted unless the command has `disable_help_flag`,
+  ignoring `disable_help` and a declared `--help` (undocumented).
 - `-V` and `--version` exist on the root when the spec has `version`.
 - 7.2.0 completes `-h`, `--help`, `-V` and `--version` unless declared flags use them.
 - Terminal help of a command with subcommands lists a `help` subcommand

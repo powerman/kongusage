@@ -1,6 +1,6 @@
 # mise
 
-Behaviour of [mise](https://mise.jdx.dev/) 2026.8.13–2026.11.0
+Behaviour of [mise](https://mise.jdx.dev/) 2026.9.17–2026.11.0
 for a task which mounts a usage spec:
 
 ```toml
