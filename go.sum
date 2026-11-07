@@ -14,6 +14,8 @@ github.com/gaojunran/usage-integrations/packages/usage-spec-go v0.1.0 h1:Wfuoi0m
 github.com/gaojunran/usage-integrations/packages/usage-spec-go v0.1.0/go.mod h1:dUGuCjWmQncYm53cKdezTLCVAuhsCyvdvszRHxKJ4rE=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
+github.com/njreid/gokdl2 v0.6.1 h1:aLiaWkEe8RudWALVFtrtBW0BWNBZeJrHKiOLP5FLS5Y=
+github.com/njreid/gokdl2 v0.6.1/go.mod h1:suRqzSehZNAS5Qwk21SzbqTUOJ6WvrUuKRvRH0a5K0Q=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/powerman/check v1.14.0 h1:K8iOOVCMOcIeeGr/SBvVGJbiq5WAUtW7sIoGfE7+Skc=

@@ -5,6 +5,7 @@ go 1.26.4
 require (
 	github.com/alecthomas/kong v1.17.0
 	github.com/gaojunran/usage-integrations/packages/kong-usage v0.1.0
+	github.com/njreid/gokdl2 v0.6.1
 	github.com/powerman/check v1.14.0
 )
 
