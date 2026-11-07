@@ -31,6 +31,9 @@ Therefore the spec uses only nodes, values and properties
 known to the oldest supported usage version
 and sets `min_usage_version` to it,
 so an older usage reports the version it needs before refusing the spec.
+usage only warns by `min_usage_version`,
+and during completion the warning may garble the prompt;
+it is kept for this report, and removing it later is a compatible change.
 One added later, including one supplied by the author ([Usage features](usage-features.md)),
 is not accepted until the oldest supported version reaches it.
 

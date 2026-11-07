@@ -32,6 +32,9 @@ Nested `cmd`, `flag` and `arg` nodes describe descendants of a node.
 They are named exactly as in the spec kongusage generates,
 e.g. `cmd "run"`, `flag "-f --force"`, `arg "<file>..."`;
 a name which is not in the spec is an error.
+Another name of the entity, e.g. `flag "-f"` or `flag "--force"`, is an error too,
+so two nodes cannot describe one entity;
+accepting such names later would be a compatible change.
 
 The tag holds properties and child nodes of the node of its field, without its name and value,
 e.g. `usage-kdl:"effect=destructive { note \"See --backup.\" }"`.
