@@ -1,0 +1,21 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+disable_help_subcommand #true
+heading "Output" help="Output options."
+heading "Network" help="Network commands."
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--plain <STRING>" help="Without a group." global=#true
+flag "--out <STRING>" help="Explicit group." help_heading="Output" global=#true
+flag "--format <STRING>" help="Explicit group." help_heading="Output" global=#true
+flag "--ad <STRING>" help="Ad hoc group." help_heading="Misc" global=#true
+cmd "remote" help="Grouped command." help_heading="Network" display_order=0 subcommand_required=#true disable_help_flag=#true disable_help_subcommand=#true {
+    heading "Network" help="Network commands."
+    heading "Output" help="Output options."
+    cmd "add" help="Inherits the group." help_heading="Network" display_order=0 disable_help_flag=#true
+    cmd "rm" help="Own group." help_heading="Output" display_order=1 disable_help_flag=#true
+}
+cmd "local" help="Ungrouped command." display_order=1 disable_help_flag=#true
+cmd "fetch" help="Grouped command." help_heading="Network" display_order=2 disable_help_flag=#true
+cmd "debug" help="Ad hoc command group." help_heading="Debugging" display_order=3 disable_help_flag=#true

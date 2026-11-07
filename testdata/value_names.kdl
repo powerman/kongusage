@@ -3,7 +3,9 @@ name "app"
 bin "app"
 disable_help_flag #true
 flag "-h --help" help="Show context-sensitive help." action="help" global=#true
-flag "--int <INT>" help="Default int." default="8080"
+flag "--int <INT>" help="Default int." default="8080" {
+    complete type="none"
+}
 flag "--string <STRING>" help="Default string." default="x"
 flag "--map <KEY=VALUE>" help="Default map." default="a=1" var=#true delimiter=";"
 flag "--angles <FILE>" help="Angles."

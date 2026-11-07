@@ -1,0 +1,12 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+default_subcommand "serve"
+disable_help_flag #true
+disable_help_subcommand #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+cmd "serve" help="Serve." display_order=0 disable_help_flag=#true
+cmd "other" help="Below the root." display_order=1 disable_help_flag=#true disable_help_subcommand=#true {
+    cmd "a" help="A." display_order=0 disable_help_flag=#true
+    cmd "b" help="B." display_order=1 disable_help_flag=#true
+}

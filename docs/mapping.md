@@ -103,6 +103,8 @@ Kong applies these before the model is read, so they need no mapping:
   which Kong still accumulates and splits.
   See [Slice and map flags](#slice-and-map-flags).
 - Map flag → `var=#true`, value name `KEY=VALUE`.
+- `type:"filecontent"` and `kong.FileContentFlag` are not slices:
+  Kong reads a whole file into the `[]byte`.
 - Custom mappers and `MapperValue` types → a flag with a value,
   or a bool flag when `IsBool()` reports so.
 - Completion: see [Completion of values](#completion-of-values).
@@ -175,8 +177,10 @@ stops parsing of flags once its first value is reached and keeps a later `--` as
 after the command name, including `--help` and `--`.
 
 Chosen: `double_dash="automatic"` on the positional,
-plus `disable_help_flag=#true` on a passthrough command,
-otherwise usage takes a leading `--help` as help.
+which is also every positional of a passthrough command.
+`disable_help_flag=#true` on every command ([Help flag](#help-flag))
+keeps usage from taking a leading `--help` of a passthrough command as its built-in help,
+but see [Passthrough commands](#passthrough-commands).
 
 ```kdl
 cmd "exec" disable_help_flag=#true {
@@ -213,7 +217,7 @@ Below the root: see [Kong only](#default-commands-below-the-root).
 
 Rejected: `default_subcommand_on_empty #true`.
 It would also select the default command on an empty command line, exactly as Kong does,
-but it breaks root completion in usage 7.1.3–7.2.0:
+but it breaks root completion in usage 6.12.0–7.3.0:
 `x <Tab>` offers the default command's arguments instead of commands.
 It is to be emitted once the oldest supported usage version fixes this;
 a test detects the fix.
@@ -335,7 +339,8 @@ or a value name it recognises.
 
 Chosen: `complete` by the Go type:
 
-- `type="none"` for numbers, `time.Duration`, `time.Time`, `*url.URL` and counters;
+- `type="none"` for numbers, `time.Duration`, `time.Time` and `*url.URL`,
+  also as elements of slices and pointers;
 - `type="dir"` for `existingdir` and `kong.ChangeDirFlag`
   (usage falls back to files when no directory matches, a bug);
 - nothing, so files, for strings, `path`, `existingfile`, `filecontent`, `*os.File`,
@@ -410,7 +415,9 @@ otherwise the title is the key.
 
 Chosen: `help_heading="<Title>"` on the flag or `cmd`,
 and `heading "<Title>" help="<Description>"` on every command which declares a member
-(for a command, on its parent, where it is listed).
+(for a command, on its parent, where it is listed),
+when the group has a description, which usage requires.
+A command without a group is under the group of its closest ancestor, as in Kong's help.
 usage renders the description in Markdown only, repeats it for a heading with global flags,
 and ignores `help_heading` of commands in Markdown.
 
@@ -467,6 +474,12 @@ Lost: nothing, parsing by usage is more permissive.
 
 A flag whose type implements `kong.IgnoreDefault` prevents selecting the default command.
 Lost: parsing by usage.
+
+### Passthrough commands
+
+usage still parses and completes global flags of ancestors, Kong's help flag included,
+before the first value of a passthrough command, which Kong passes to the positional.
+Lost: parsing and completion by usage.
 
 ### `passthrough:"partial"`
 

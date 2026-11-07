@@ -1,0 +1,28 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+disable_help_subcommand #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--a <STRING>" help="A." global=#true
+flag "--b <STRING>" help="B." global=#true
+flag "--c <STRING>" help="C." global=#true
+flag "--d <STRING>" help="D." global=#true
+flag "--e <STRING>" help="E." global=#true
+flag "--f <STRING>" help="F." global=#true
+flag "--g <STRING>" help="G." global=#true
+flag "--h <STRING>" help="H." global=#true
+flag "--i <STRING>" help="I." global=#true overrides="--j"
+flag "--j <STRING>" help="J." global=#true overrides="--i"
+flag "--k <STRING>" help="K." global=#true overrides="--l"
+flag "--l <STRING>" help="L." global=#true overrides="--k"
+group "ab" "--a" "--b"
+group "bc" "--b" "--c"
+group "de" "--d" "--e" required=#true
+group "fg" "--f" "--g"
+group "ij" "--i" "--j" required=#true multiple=#true
+cmd "sub" help="Sub." display_order=0 disable_help_flag=#true {
+    flag "--x" help="X." bool_value=#true
+    flag "--y" help="Y." bool_value=#true
+    group "xy" "--x" "--y"
+}

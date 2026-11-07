@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"flag"
+	urlpkg "net/url"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/powerman/check"
@@ -253,6 +255,164 @@ type (
 	}
 )
 
+type (
+	testPassthroughCLI struct {
+		Exec    testPassthroughCmd `cmd:"" passthrough:"" help:"Passthrough command."`
+		All     testPassthroughAll `cmd:""                help:"Passthrough positional."`
+		Partial testPassthroughPrt `cmd:""                help:"Partial passthrough positional."`
+	}
+	testPassthroughCmd struct {
+		Args []string `arg:"" optional:"" help:"Arguments."`
+	}
+	testPassthroughAll struct {
+		Flag bool     `                                  help:"Flag."`
+		Args []string `arg:"" passthrough:"" optional:"" help:"Arguments."`
+	}
+	testPassthroughPrt struct {
+		Flag bool     `                                         help:"Flag."`
+		Args []string `arg:"" passthrough:"partial" optional:"" help:"Arguments."`
+	}
+)
+
+type (
+	testDefaultCLI struct {
+		Serve testLeafCmd    `cmd:"" default:"1" help:"Serve."`
+		Other testDefaultSub `cmd:""             help:"Below the root."`
+	}
+	testDefaultWithArgsCLI struct {
+		Serve testDefaultArgs `cmd:"" default:"withargs" help:"Serve."`
+		Other testLeafCmd     `cmd:""                    help:"Other."`
+	}
+	testDefaultSub struct {
+		A testLeafCmd `cmd:"" default:"1" help:"A."`
+		B testLeafCmd `cmd:""             help:"B."`
+	}
+	testDefaultArgs struct {
+		Port int    `                   help:"Port."`
+		Dir  string `arg:"" optional:"" help:"Directory."`
+	}
+)
+
+type (
+	testCompletionCLI struct {
+		Int       int                       `                              help:"Int."`
+		Int8      int8                      `                              help:"Int8."`
+		Int16     int16                     `                              help:"Int16."`
+		Int32     int32                     `                              help:"Int32."`
+		Int64     int64                     `                              help:"Int64."`
+		Uint      uint                      `                              help:"Uint."`
+		Uint16    uint16                    `                              help:"Uint16."`
+		Uint32    uint32                    `                              help:"Uint32."`
+		Uint64    uint64                    `                              help:"Uint64."`
+		Float     float32                   `                              help:"Float."`
+		Float64   float64                   `                              help:"Float64."`
+		Named     testNamedInt              `                              help:"Named int."`
+		Duration  time.Duration             `                              help:"Duration."`
+		Time      time.Time                 `                              help:"Time."`
+		URL       *urlpkg.URL               `                              help:"URL."`
+		IntPtr    *int                      `                              help:"Pointer to int."`
+		Ints      []int                     `                              help:"Slice of ints."`
+		Map       map[string]int            `                              help:"Map."`
+		Dir       string                    `                              help:"Existing dir."                type:"existingdir"`
+		ChDir     kong.ChangeDirFlag        `                              help:"Change dir."`
+		String    string                    `                              help:"String."`
+		Path      string                    `                              help:"Path."                        type:"path"`
+		File      string                    `                              help:"Existing file."               type:"existingfile"`
+		Content   []byte                    `                              help:"File content."                type:"filecontent"`
+		OSFile    *os.File                  `                              help:"File."`
+		FileFlag  kong.FileContentFlag      `                              help:"File content flag."`
+		NamedFile kong.NamedFileContentFlag `                              help:"Named file content flag."`
+		Config    kong.ConfigFlag           `                              help:"Config."`
+		Level     testLevel                 `                              help:"MapperValue of int kind."`
+		Text      testTextLevel             `                              help:"TextUnmarshaler of int kind."`
+		Mapped    int                       `                              help:"Custom named mapper."         type:"testvalue"`
+		Enum      int                       `       default:"1" enum:"1,2" help:"Enum."`
+		Verbose   int                       `                              help:"Counter."                     type:"counter"`
+		Bytes     []byte                    `                              help:"Bytes."`
+		Pos       int                       `arg:""                        help:"Positional."`
+	}
+	testNamedInt  int
+	testLevel     int
+	testTextLevel int
+)
+
+func (*testLevel) Decode(*kong.DecodeContext) error { return nil }
+func (*testTextLevel) UnmarshalText([]byte) error   { return nil }
+
+// testDurationMapper replaces Kong's mapper of time.Duration.
+type testDurationMapper struct{}
+
+func (testDurationMapper) Decode(*kong.DecodeContext, reflect.Value) error { return nil }
+
+type testCustomTypeCLI struct {
+	Duration time.Duration `help:"Duration with a custom mapper."`
+	Int      int           `help:"Int with a custom kind mapper."`
+}
+
+type (
+	testChoiceGroupsCLI struct {
+		A   string              `                   help:"A."                 xor:"ab"`
+		B   string              `                   help:"B."                 xor:"ab,bc"`
+		C   string              `                   help:"C."                 xor:"bc"`
+		D   string              `       required:"" help:"D."                 xor:"de"` //nolint:revive // Kong's idiom.
+		E   string              `       required:"" help:"E."                 xor:"de"` //nolint:revive // Kong's idiom.
+		F   string              `       required:"" help:"F."                 xor:"fg"` //nolint:revive // Kong's idiom.
+		G   string              `                   help:"G."                 xor:"fg"`
+		H   string              `       required:"" help:"H."                 xor:"h"` //nolint:revive // Kong's idiom.
+		I   string              `       required:"" help:"I."   lastwins:"ij"`         //nolint:revive // Kong's idiom.
+		J   string              `       required:"" help:"J."   lastwins:"ij"`         //nolint:revive // Kong's idiom.
+		K   string              `                   help:"K."   lastwins:"kl"`
+		L   string              `                   help:"L."   lastwins:"kl"`
+		Sub testChoiceGroupsCmd `cmd:""             help:"Sub."`
+	}
+	testChoiceGroupsCmd struct {
+		X bool `help:"X." xor:"xy"`
+		Y bool `help:"Y." xor:"xy"`
+	}
+)
+
+type testHiddenPositionalCLI struct {
+	File string `arg:"" hidden:"" help:"Hidden positional."`
+}
+
+type (
+	testHeadingsCLI struct {
+		Plain  string         `       help:"Without a group."`
+		Out    string         `       help:"Explicit group."       group:"out"`
+		Format string         `       help:"Explicit group."       group:"out"`
+		Ad     string         `       help:"Ad hoc group."         group:"Misc"`
+		Remote testHeadingsGr `cmd:"" help:"Grouped command."      group:"net"`
+		Local  testLeafCmd    `cmd:"" help:"Ungrouped command."`
+		Fetch  testLeafCmd    `cmd:"" help:"Grouped command."      group:"net"`
+		Debug  testLeafCmd    `cmd:"" help:"Ad hoc command group." group:"Debugging"`
+	}
+	testHeadingsGr struct {
+		Add testLeafCmd `cmd:"" help:"Inherits the group."`
+		Rm  testLeafCmd `cmd:"" help:"Own group."          group:"out"`
+	}
+)
+
+var testHeadingsOptions = []kong.Option{kong.ExplicitGroups([]kong.Group{
+	{Key: "out", Title: "Output", Description: "Output options."},
+	{Key: "net", Title: "Network", Description: "Network commands."},
+})}
+
+type (
+	testBranchingCLI struct {
+		Rename testRenameCmd `cmd:"" help:"Rename."`
+	}
+	testRenameCmd struct {
+		From testRenameFrom `arg:"" help:"Old name."`
+	}
+	testRenameFrom struct {
+		From string       `       arg:"" help:"Old name."`
+		To   testRenameTo `cmd:""        help:"To."`
+	}
+	testRenameTo struct {
+		Name string `arg:"" help:"New name."`
+	}
+)
+
 func TestWriteSpec(tt *testing.T) {
 	tt.Parallel()
 
@@ -292,6 +452,20 @@ func TestWriteSpec(tt *testing.T) {
 		{"positional_names", &testPositionalNamesCLI{}, kongusage.Config{}, nil},
 		{"positionals", &testPositionalsCLI{}, kongusage.Config{}, nil},
 		{"positionals_map", &testRequiredSliceCLI{}, kongusage.Config{}, nil},
+		{"positional_hidden", &testHiddenPositionalCLI{}, kongusage.Config{}, nil},
+		{"positional_branching", &testBranchingCLI{}, kongusage.Config{}, nil},
+		{"passthrough", &testPassthroughCLI{}, kongusage.Config{}, nil},
+		{"default_commands", &testDefaultCLI{}, kongusage.Config{}, nil},
+		{"default_commands_withargs", &testDefaultWithArgsCLI{}, kongusage.Config{}, nil},
+		{"completion", &testCompletionCLI{}, kongusage.Config{}, []kong.Option{
+			kong.NamedMapper("testvalue", testValueMapper{}),
+		}},
+		{"completion_custom_type", &testCustomTypeCLI{}, kongusage.Config{}, []kong.Option{
+			kong.TypeMapper(reflect.TypeFor[time.Duration](), testDurationMapper{}),
+			kong.KindMapper(reflect.Int, testValueMapper{}),
+		}},
+		{"flag_choice_groups", &testChoiceGroupsCLI{}, kongusage.Config{}, nil},
+		{"group_headings", &testHeadingsCLI{}, kongusage.Config{}, testHeadingsOptions},
 	}
 	for _, tc := range tests {
 		tt.Run(tc.name, func(tt *testing.T) {

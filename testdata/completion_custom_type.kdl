@@ -1,0 +1,7 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--duration <DURATION>" help="Duration with a custom mapper."
+flag "--int <INT>" help="Int with a custom kind mapper."

@@ -1,0 +1,84 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--int <INT>" help="Int." {
+    complete type="none"
+}
+flag "--int-8 <INT-8>" help="Int8." {
+    complete type="none"
+}
+flag "--int-16 <INT-16>" help="Int16." {
+    complete type="none"
+}
+flag "--int-32 <INT-32>" help="Int32." {
+    complete type="none"
+}
+flag "--int-64 <INT-64>" help="Int64." {
+    complete type="none"
+}
+flag "--uint <UINT>" help="Uint." {
+    complete type="none"
+}
+flag "--uint-16 <UINT-16>" help="Uint16." {
+    complete type="none"
+}
+flag "--uint-32 <UINT-32>" help="Uint32." {
+    complete type="none"
+}
+flag "--uint-64 <UINT-64>" help="Uint64." {
+    complete type="none"
+}
+flag "--float <FLOAT-32>" help="Float." {
+    complete type="none"
+}
+flag "--float-64 <FLOAT-64>" help="Float64." {
+    complete type="none"
+}
+flag "--named <TEST-NAMED-INT>" help="Named int." {
+    complete type="none"
+}
+flag "--duration <DURATION>" help="Duration." {
+    complete type="none"
+}
+flag "--time <TIME>" help="Time." {
+    complete type="none"
+}
+flag "--url <URL>" help="URL." {
+    complete type="none"
+}
+flag "--int-ptr <INT-PTR>" help="Pointer to int." {
+    complete type="none"
+}
+flag "--ints <INTS>" help="Slice of ints." var=#true delimiter="," {
+    complete type="none"
+}
+flag "--map <KEY=VALUE>" help="Map." var=#true delimiter=";"
+flag "--dir <STRING>" help="Existing dir." {
+    complete type="dir"
+}
+flag "--ch-dir <CHANGE-DIR-FLAG>" help="Change dir." {
+    complete type="dir"
+}
+flag "--string <STRING>" help="String."
+flag "--path <STRING>" help="Path."
+flag "--file <STRING>" help="Existing file."
+flag "--content <CONTENT>" help="File content."
+flag "--os-file <OS-FILE>" help="File."
+flag "--file-flag <FILE-CONTENT-FLAG>" help="File content flag."
+flag "--named-file <NAMED-FILE-CONTENT-FLAG>" help="Named file content flag."
+flag "--config <CONFIG-FLAG>" help="Config."
+flag "--level <TEST-LEVEL>" help="MapperValue of int kind."
+flag "--text <TEST-TEXT-LEVEL>" help="TextUnmarshaler of int kind."
+flag "--mapped <INT>" help="Custom named mapper."
+flag "--enum <INT>" help="Enum." default="1" {
+    choices "1" "2"
+}
+flag "--verbose" help="Counter." count=#true
+flag "--bytes <BYTES>" help="Bytes." var=#true delimiter="," {
+    complete type="none"
+}
+arg "<pos>" help="Positional." {
+    complete type="none"
+}

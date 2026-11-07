@@ -1,0 +1,15 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+default_subcommand "serve"
+default_subcommand_flags #true
+disable_help_flag #true
+disable_help_subcommand #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+cmd "serve" help="Serve." display_order=0 disable_help_flag=#true {
+    flag "--port <INT>" help="Port." {
+        complete type="none"
+    }
+    arg "[dir]" help="Directory."
+}
+cmd "other" help="Other." display_order=1 disable_help_flag=#true

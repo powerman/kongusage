@@ -16,6 +16,7 @@ const MinUsageVersion = "6.12.0"
 // converter converts the Kong model of a CLI to nodes of a usage spec by docs/mapping.md.
 type converter struct {
 	cfg            Config
+	mappers        *kong.Registry // Kong's default mappers, to tell them from custom ones.
 	hyphenPrefixed bool
 	version        string
 	helpFlag       *kong.Flag
@@ -28,6 +29,7 @@ type converter struct {
 func convert(k *kong.Kong, cfg Config) (nodes []*kdl.Node, notes []string) {
 	c := &converter{
 		cfg:            cfg,
+		mappers:        kong.NewRegistry().RegisterDefaults(),
 		hyphenPrefixed: hyphenPrefixed(k),
 		version:        versionVar(k),
 		helpFlag:       k.Model.HelpFlag,
@@ -55,6 +57,18 @@ func (c *converter) application(app *kong.Application) []*kdl.Node {
 	if c.version != "" {
 		nodes = append(nodes, kdl.NewNode("version", kdl.String(c.version)))
 	}
+	// Kong's default commands below the root are lost: usage has them at the root only.
+	// A flag of a type implementing kong.IgnoreDefault, which prevents selecting the default
+	// command in Kong, is lost too: usage cannot express it.
+	if def := app.DefaultCmd; def != nil {
+		nodes = append(nodes, kdl.NewNode("default_subcommand", kdl.String(def.Name)))
+		if def.Tag.Default == "withargs" {
+			nodes = append(nodes, kdl.NewNode("default_subcommand_flags", kdl.Bool(true)))
+		}
+		// default_subcommand_on_empty would select the default command
+		// on an empty command line as Kong does, but it breaks root completion
+		// (see TestDefaultSubcommandOnEmpty).
+	}
 	nodes = append(nodes, kdl.NewNode("disable_help_flag", kdl.Bool(true)))
 	if hasSubcommands(app.Node) {
 		nodes = append(nodes, kdl.NewNode("disable_help_subcommand", kdl.Bool(true)))
@@ -65,24 +79,98 @@ func (c *converter) application(app *kong.Application) []*kdl.Node {
 	return append(nodes, c.members(app.Node)...)
 }
 
-// members returns the nodes of flags, positional arguments and subcommands of the command n.
+// members returns the nodes of headings, flags, positional arguments, groups of flags
+// and subcommands of the command n.
+// Kong's unknown flags are not expressed (docs/mapping.md "Unknown flags"):
+// usage parses them more permissively.
 func (c *converter) members(n *kong.Node) []*kdl.Node {
-	var nodes []*kdl.Node
+	nodes := c.headings(n)
 	for _, f := range n.Flags {
 		nodes = append(nodes, c.flag(n, f))
 	}
 	for _, p := range n.Positional {
 		nodes = append(nodes, c.positional(n, p))
 	}
+	nodes = append(nodes, c.groups(n)...)
 	order := 0
+	branched := false
 	for _, child := range n.Children {
 		switch child.Type {
 		case kong.CommandNode:
 			nodes = append(nodes, c.command(child, order))
 			order++
-		case kong.ApplicationNode, kong.ArgumentNode:
-			// TODO(stage 4): docs/mapping.md "Branching positional arguments".
+		case kong.ArgumentNode:
+			// usage cannot continue with commands after a positional:
+			// only the positional is emitted, its flags and subcommands are lost.
+			// Kong takes the first branch whose positional parses,
+			// which another positional cannot express, so later branches are lost too.
+			if !branched {
+				nodes = append(nodes, c.positional(child, child.Argument))
+				branched = true
+			}
+		case kong.ApplicationNode:
+			// Kong never makes an application node a child.
 		}
+	}
+	return nodes
+}
+
+// headings returns the headings of the groups of the members of the command n
+// which have a description, in the order of their first use.
+// A command is a member of the closest group of its own or of its ancestors,
+// as in Kong's help.
+func (*converter) headings(n *kong.Node) []*kdl.Node {
+	var groups []*kong.Group
+	add := func(g *kong.Group) {
+		if g == nil || g.Description == "" {
+			return
+		}
+		// usage tells headings by their titles.
+		if !slices.ContainsFunc(groups, func(other *kong.Group) bool { return other.Title == g.Title }) {
+			groups = append(groups, g)
+		}
+	}
+	for _, f := range n.Flags {
+		add(f.Group)
+	}
+	for _, child := range n.Children {
+		if child.Type == kong.CommandNode {
+			add(child.ClosestGroup())
+		}
+	}
+	nodes := make([]*kdl.Node, len(groups))
+	for i, g := range groups {
+		nodes[i] = kdl.NewNode("heading", kdl.String(g.Title)).SetProp("help", kdl.String(g.Description))
+	}
+	return nodes
+}
+
+// groups returns the groups of flags of the command n by docs/mapping.md
+// "Flag relationship groups": every xor group and every required lastwins group.
+func (*converter) groups(n *kong.Node) []*kdl.Node {
+	var nodes []*kdl.Node
+	for _, g := range choiceGroups(n) {
+		// usage refuses a group of one flag; Kong requires no flag of such a group.
+		if len(g.flags) == 1 {
+			continue
+		}
+		required := choiceGroupRequired(n, g.flags)
+		// Overrides of the members express a lastwins group which is not required.
+		if g.lastWins && !required {
+			continue
+		}
+		values := []kdl.Value{kdl.String(g.name)}
+		for _, f := range g.flags {
+			values = append(values, kdl.String("--"+f.Name))
+		}
+		node := kdl.NewNode("group", values...)
+		if required {
+			node.SetProp("required", kdl.Bool(true))
+		}
+		if g.lastWins {
+			node.SetProp("multiple", kdl.Bool(true))
+		}
+		nodes = append(nodes, node)
 	}
 	return nodes
 }
@@ -94,8 +182,9 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 	node := kdl.NewNode("flag", kdl.String(c.flagName(cmd, f)))
 
 	c.setHelp(node, f.Value)
-	// Kong turns required on and-group members into required of the whole group.
-	if f.Tag.Required || andGroupRequired(cmd, f) {
+	// Kong requires a member of an xor or lastwins group only together with other members,
+	// which the group of flags expresses.
+	if isRequired(cmd, f) && len(f.Xor) == 0 && len(f.LastWins) == 0 {
 		node.SetProp("required", kdl.Bool(true))
 	}
 	if f.HasDefault {
@@ -104,14 +193,19 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 	if f.Hidden {
 		node.SetProp("hide", kdl.Bool(true))
 	}
+	if f.Group != nil {
+		node.SetProp("help_heading", kdl.String(f.Group.Title))
+	}
 	if f.Tag.Negatable != "" {
 		node.SetProp("negate", kdl.String(negation(f)))
 	}
 	if f.IsCounter() {
+		// Kong also sets a counter by `--verbose=3`, which usage counts as one occurrence.
 		node.SetProp("count", kdl.Bool(true))
 	}
 	if isCumulative(f.Value) {
 		node.SetProp("var", kdl.Bool(true))
+		// usage splits values by the delimiter even where Kong's `\,` escapes it.
 		if sep := separator(f); sep != -1 {
 			node.SetProp("delimiter", kdl.String(string(sep)))
 		}
@@ -122,6 +216,7 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 	case isVersion:
 		node.SetProp("action", kdl.String("version"))
 	case f.IsBool() && !f.IsCounter():
+		// Kong also takes yes, no, 1 and 0 in any case, usage only true and false.
 		node.SetProp("bool_value", kdl.Bool(true))
 	}
 	// Kong accepts flags of ancestors after a subcommand.
@@ -138,8 +233,10 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 		c.setEnv(node, f.Tag.Envs)
 	}
 	c.setChoices(node, f.Value)
-	c.setRelated(node, "requires", andMembers(cmd, f))
-	c.setRelated(node, "overrides", groupMembers(cmd, f, func(f *kong.Flag) []string { return f.LastWins }))
+	if takesValue(f) {
+		c.setComplete(node, f.Value)
+	}
+	c.setRelations(node, cmd, f)
 	return node
 }
 
@@ -151,6 +248,7 @@ func (c *converter) positional(cmd *kong.Node, p *kong.Positional) *kdl.Node {
 		name = "[" + name + "]"
 	}
 	if isCumulative(p) {
+		// Kong stops a slice at a flag (`x -v y` fails), usage takes values on both sides.
 		name += "..."
 	}
 	node := kdl.NewNode("arg", kdl.String(name))
@@ -158,9 +256,15 @@ func (c *converter) positional(cmd *kong.Node, p *kong.Positional) *kdl.Node {
 	if p.HasDefault {
 		node.SetProp("default", kdl.String(p.Default))
 	}
+	// `hidden:""` is ignored, as Kong's help shows a hidden positional anyway.
+	// Kong refuses unknown flags before the first value of `passthrough:"partial"`,
+	// which usage cannot express for one positional.
+	if p.PassthroughMode != kong.PassThroughModeNone || cmd.Passthrough {
+		node.SetProp("double_dash", kdl.String("automatic"))
+	}
 	c.setEnv(node, p.Tag.Envs)
 	c.setChoices(node, p)
-	// TODO(stage 4): docs/mapping.md "Hidden positional arguments".
+	c.setComplete(node, p)
 	return node
 }
 
@@ -175,12 +279,18 @@ func (c *converter) command(n *kong.Node, order int) *kdl.Node {
 	if n.Hidden {
 		node.SetProp("hide", kdl.Bool(true))
 	}
+	if g := n.ClosestGroup(); g != nil {
+		node.SetProp("help_heading", kdl.String(g.Title))
+	}
 	if !c.cfg.NoDisplayOrder {
 		node.SetProp("display_order", kdl.Int(order))
 	}
 	if subcommandRequired(n) {
 		node.SetProp("subcommand_required", kdl.Bool(true))
 	}
+	// Without the built-in help flags usage does not take a leading `--help`
+	// of a passthrough command as help, but it still takes inherited global flags there,
+	// Kong's help flag included.
 	node.SetProp("disable_help_flag", kdl.Bool(true))
 	if hasSubcommands(n) {
 		node.SetProp("disable_help_subcommand", kdl.Bool(true))
@@ -288,6 +398,24 @@ func (c *converter) setChoices(node *kdl.Node, v *kong.Value) {
 	if v.Enum != "" {
 		node.AddChild(kdl.NewNode("choices", c.strValues(v.EnumSlice())...))
 	}
+}
+
+// setComplete sets the completion of a value without choices
+// by docs/mapping.md "Completion of values".
+// Values are not validated by usage, which is lost.
+func (c *converter) setComplete(node *kdl.Node, v *kong.Value) {
+	if v.Enum != "" {
+		return
+	}
+	if typ := completion(c.mappers, v); typ != "" {
+		node.AddChild(kdl.NewNode("complete").SetProp("type", kdl.String(typ)))
+	}
+}
+
+// setRelations sets the flags which the flag f of the command cmd requires and overrides.
+func (c *converter) setRelations(node *kdl.Node, cmd *kong.Node, f *kong.Flag) {
+	c.setRelated(node, "requires", andMembers(cmd, f))
+	c.setRelated(node, "overrides", groupMembers(cmd, f, func(f *kong.Flag) []string { return f.LastWins }))
 }
 
 // setRelated sets the relationship name of node to flags:

@@ -4,7 +4,9 @@ bin "app"
 disable_help_flag #true
 flag "-h --help" help="Show context-sensitive help." action="help" global=#true
 flag "--string <STRING>" help="String." default="x y"
-flag "--int <INT>" help="Int." default="8080"
+flag "--int <INT>" help="Int." default="8080" {
+    complete type="none"
+}
 flag "--bool-true" help="Bool true." default=#true bool_value=#true
 flag "--bool-yes" help="Bool yes." default=#true bool_value=#true
 flag "--bool-false" help="Bool false." default=#false bool_value=#true
