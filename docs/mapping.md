@@ -2,7 +2,7 @@
 
 How kongusage maps a [Kong](https://github.com/alecthomas/kong) CLI
 to a [usage spec](https://usage.jdx.dev/spec/), and which Kong features are lost.
-It is correct for Kong v1.17.0, usage 6.12.0–7.2.0 and mise 2026.9.17–2026.11.0.
+It is correct for Kong v1.17.0, usage 6.12.0–7.3.0 and mise 2026.9.17–2026.10.24.
 
 The input is the Kong model: the `kong.Application` tree built by `kong.New`.
 The output is a spec for minimal supported usage version (6.12.0).
@@ -426,7 +426,7 @@ Rejected: `heading` only on the root; no `heading`.
 
 ## Kong only
 
-Kong features usage 7.2.0 cannot express, and what is lost.
+Kong features usage 7.3.0 cannot express, and what is lost.
 
 ### Branching positional arguments
 

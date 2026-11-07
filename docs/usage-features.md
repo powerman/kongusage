@@ -2,7 +2,7 @@
 
 Features of the [usage spec](https://usage.jdx.dev/spec/) which Kong has no counterpart for,
 so the author of the CLI supplies them.
-It is correct for usage 6.12.0–7.2.0.
+It is correct for usage 6.12.0–7.3.0.
 What kongusage derives from the Kong model is described in [Mapping](mapping.md).
 
 Kong semantics (parsing, validation) is supported only together with its implementation in Kong,

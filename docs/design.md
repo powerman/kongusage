@@ -43,8 +43,8 @@ is not accepted until the oldest supported version reaches it.
 - usage versions released during the last three months,
   but not older than 6.12.0, which added `complete` of flags and positionals:
   usage-lib of mise releases and the `usage` CLI.
-  Now these are usage-lib 6.12.0 (mise 2026.9.17) to 7.1.5 (mise 2026.11.0)
-  and the `usage` CLI up to 7.2.0.
+  Now these are usage-lib 6.12.0 (mise 2026.9.17) to 7.1.3 (mise 2026.10.24)
+  and the `usage` CLI up to 7.3.0.
 - Tests check every spec by the `usage` CLI of the oldest supported version
   and of the newest one in `mise.lock`.
 

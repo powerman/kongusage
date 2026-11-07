@@ -1,6 +1,6 @@
 # usage
 
-Behaviour of [usage](https://usage.jdx.dev/) 6.12.0–7.2.0 which kongusage depends on.
+Behaviour of [usage](https://usage.jdx.dev/) 6.12.0–7.3.0 which kongusage depends on.
 Undocumented behaviour is marked so: it may change in any release.
 
 ## Consumers of a spec
@@ -64,7 +64,8 @@ The name of a positional is used the same way (`arg "[url]"` completes nothing).
   `usage diff` takes `--help` as accepted unless the command has `disable_help_flag`,
   ignoring `disable_help` and a declared `--help` (undocumented).
 - `-V` and `--version` exist on the root when the spec has `version`.
-- 7.2.0 completes `-h`, `--help`, `-V` and `--version` unless declared flags use them.
+- Since 7.2.0, usage completes `-h`, `--help`, `-V` and `--version`
+  unless declared flags use them.
 - Terminal help of a command with subcommands lists a `help` subcommand
   which the parser refuses.
   `disable_help` does not remove it, contrary to the docs;
