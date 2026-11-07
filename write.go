@@ -39,6 +39,5 @@ func WriteSpec(w io.Writer, k *kong.Kong, cfg Config) error {
 	//     be a command of another one, as usage drops them on mount;
 	//     about_md becomes help_md, as usage turns about of a plugin into help.
 	//   - Add the tree to the spec derived from Kong.
-	nodes, _ := convert(k, cfg)
-	return kdl.Write(w, nodes)
+	return kdl.Write(w, newConverter(k, cfg).Nodes())
 }

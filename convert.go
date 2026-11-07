@@ -16,25 +16,36 @@ const MinUsageVersion = "6.12.0"
 // converter converts the Kong model of a CLI to nodes of a usage spec by docs/mapping.md.
 type converter struct {
 	cfg            Config
+	k              *kong.Kong
 	mappers        *kong.Registry // Kong's default mappers, to tell them from custom ones.
 	hyphenPrefixed bool
 	version        string
-	helpFlag       *kong.Flag
-	// notes describe silent fixes of the Kong model (docs/design.md).
-	notes []string
+
+	nodes []*kdl.Node
+	notes []string // describe silent fixes of the Kong model (docs/design.md).
 }
 
-// convert returns the top-level nodes of the usage spec of k
-// and notes on the parts of the Kong model it has fixed silently.
-func convert(k *kong.Kong, cfg Config) (nodes []*kdl.Node, notes []string) {
+// newConverter converts the Kong model of k to the usage spec.
+func newConverter(k *kong.Kong, cfg Config) *converter {
 	c := &converter{
 		cfg:            cfg,
+		k:              k,
 		mappers:        kong.NewRegistry().RegisterDefaults(),
 		hyphenPrefixed: hyphenPrefixed(k),
 		version:        versionVar(k),
-		helpFlag:       k.Model.HelpFlag,
 	}
-	return c.application(k.Model), c.notes
+	c.convert()
+	return c
+}
+
+// Nodes returns the top-level nodes of the usage spec.
+func (c *converter) Nodes() []*kdl.Node {
+	return c.nodes
+}
+
+// Notes returns the notes on the parts of the Kong model fixed silently.
+func (c *converter) Notes() []string {
+	return c.notes
 }
 
 // notef adds a note on a silent fix of the entity of the command cmd.
@@ -42,7 +53,8 @@ func (c *converter) notef(cmd *kong.Node, entity, format string, args ...any) {
 	c.notes = append(c.notes, cmd.FullPath()+": "+entity+": "+fmt.Sprintf(format, args...))
 }
 
-func (c *converter) application(app *kong.Application) []*kdl.Node {
+func (c *converter) convert() {
+	app := c.k.Model
 	nodes := []*kdl.Node{
 		kdl.NewNode("min_usage_version", kdl.String(MinUsageVersion)),
 		kdl.NewNode("name", kdl.String(app.Name)),
@@ -76,7 +88,8 @@ func (c *converter) application(app *kong.Application) []*kdl.Node {
 	if c.version != "" {
 		nodes = append(nodes, kdl.NewNode("disable_version_flag", kdl.Bool(true)))
 	}
-	return append(nodes, c.members(app.Node)...)
+	nodes = append(nodes, c.members(app.Node)...)
+	c.nodes = nodes
 }
 
 // members returns the nodes of headings, flags, positional arguments, groups of flags
@@ -176,7 +189,7 @@ func (*converter) groups(n *kong.Node) []*kdl.Node {
 }
 
 func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
-	isHelp := f == c.helpFlag
+	isHelp := f == c.k.Model.HelpFlag
 	isVersion := isVersionFlag(f)
 
 	node := kdl.NewNode("flag", kdl.String(c.flagName(cmd, f)))

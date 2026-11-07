@@ -4,6 +4,5 @@ import "github.com/alecthomas/kong"
 
 // Notes returns the notes on silent fixes of the Kong model of k.
 func Notes(k *kong.Kong) []string {
-	_, notes := convert(k, Config{})
-	return notes
+	return newConverter(k, Config{}).Notes()
 }
