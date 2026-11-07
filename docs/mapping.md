@@ -189,7 +189,8 @@ cmd "exec" disable_help_flag=#true {
 ```
 
 Its documented meaning is Kong's, and completion stops offering flags after the first value.
-usage 7.x drops the first `--` after the first value (undocumented); later ones are kept.
+usage drops the first `--` after the first value (undocumented);
+later ones are kept since 7.0.0 and dropped too before it.
 
 Rejected: `double_dash="preserve"`:
 keeps `--` as a value, but flags are still parsed and completed after the first value.
@@ -277,7 +278,7 @@ Through a mise mount `version` has no effect and `--version` is an ordinary flag
 
 Rejected:
 
-- `version` with a plain bool flag: usage also accepts and completes `-V`.
+- `version` with a plain bool flag: usage also accepts `-V`, and completes it since 7.2.0.
 - No `version`: docs lose the version.
 
 ### Flag aliases
