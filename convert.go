@@ -8,6 +8,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/powerman/kongusage/internal/kdl"
+	"github.com/powerman/kongusage/internal/usagekdl"
 )
 
 // MinUsageVersion is the oldest supported usage version.
@@ -88,21 +89,24 @@ func (c *converter) convert() {
 	if c.version != "" {
 		nodes = append(nodes, kdl.NewNode("disable_version_flag", kdl.Bool(true)))
 	}
-	nodes = append(nodes, c.members(app.Node)...)
+	fs := c.rootUsageKDL()
+	nodes = append(nodes, fs.Nodes()...)
+	nodes = append(nodes, c.members(app.Node, fs)...)
+	fs.CheckUsed([]string{app.Name})
 	c.nodes = nodes
 }
 
 // members returns the nodes of headings, flags, positional arguments, groups of flags
-// and subcommands of the command n.
+// and subcommands of the command n with usage features fs.
 // Kong's unknown flags are not expressed (docs/mapping.md "Unknown flags"):
 // usage parses them more permissively.
-func (c *converter) members(n *kong.Node) []*kdl.Node {
+func (c *converter) members(n *kong.Node, fs *usagekdl.Set) []*kdl.Node {
 	nodes := c.headings(n)
 	for _, f := range n.Flags {
-		nodes = append(nodes, c.flag(n, f))
+		nodes = append(nodes, c.flag(n, f, fs))
 	}
 	for _, p := range n.Positional {
-		nodes = append(nodes, c.positional(n, p))
+		nodes = append(nodes, c.positional(n, p, fs))
 	}
 	nodes = append(nodes, c.groups(n)...)
 	order := 0
@@ -110,15 +114,16 @@ func (c *converter) members(n *kong.Node) []*kdl.Node {
 	for _, child := range n.Children {
 		switch child.Type {
 		case kong.CommandNode:
-			nodes = append(nodes, c.command(child, order))
+			nodes = append(nodes, c.command(child, order, fs))
 			order++
 		case kong.ArgumentNode:
 			// usage cannot continue with commands after a positional:
 			// only the positional is emitted, its flags and subcommands are lost.
 			// Kong takes the first branch whose positional parses,
 			// which another positional cannot express, so later branches are lost too.
+			// usage features of the type of the branch are lost with it.
 			if !branched {
-				nodes = append(nodes, c.positional(child, child.Argument))
+				nodes = append(nodes, c.positional(child, child.Argument, fs))
 				branched = true
 			}
 		case kong.ApplicationNode:
@@ -188,11 +193,13 @@ func (*converter) groups(n *kong.Node) []*kdl.Node {
 	return nodes
 }
 
-func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
+// flag returns the node of the flag f of the command cmd with usage features cmdUsageKDL.
+func (c *converter) flag(cmd *kong.Node, f *kong.Flag, cmdUsageKDL *usagekdl.Set) *kdl.Node {
 	isHelp := f == c.k.Model.HelpFlag
 	isVersion := isVersionFlag(f)
 
 	node := kdl.NewNode("flag", kdl.String(c.flagName(cmd, f)))
+	fs := c.valueUsageKDL([]string{cmd.FullPath(), "flag --" + f.Name}, cmdUsageKDL.Entity(node), f.Value)
 
 	c.setHelp(node, f.Value)
 	// Kong requires a member of an xor or lastwins group only together with other members,
@@ -216,13 +223,7 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 		// Kong also sets a counter by `--verbose=3`, which usage counts as one occurrence.
 		node.SetProp("count", kdl.Bool(true))
 	}
-	if isCumulative(f.Value) {
-		node.SetProp("var", kdl.Bool(true))
-		// usage splits values by the delimiter even where Kong's `\,` escapes it.
-		if sep := separator(f); sep != -1 {
-			node.SetProp("delimiter", kdl.String(string(sep)))
-		}
-	}
+	c.setCumulative(node, f)
 	switch {
 	case isHelp:
 		node.SetProp("action", kdl.String("help"))
@@ -245,15 +246,17 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 	if !isVersion {
 		c.setEnv(node, f.Tag.Envs)
 	}
-	c.setChoices(node, f.Value)
+	c.setChoices(node, f.Value, fs)
 	if takesValue(f) {
-		c.setComplete(node, f.Value)
+		c.setComplete(node, f.Value, fs)
 	}
 	c.setRelations(node, cmd, f)
-	return node
+	return node.AddChild(fs.Apply(node)...)
 }
 
-func (c *converter) positional(cmd *kong.Node, p *kong.Positional) *kdl.Node {
+// positional returns the node of the positional p of the command cmd
+// with usage features cmdUsageKDL.
+func (c *converter) positional(cmd *kong.Node, p *kong.Positional, cmdUsageKDL *usagekdl.Set) *kdl.Node {
 	name := c.positionalName(cmd, p)
 	if p.Required {
 		name = "<" + name + ">"
@@ -265,6 +268,11 @@ func (c *converter) positional(cmd *kong.Node, p *kong.Positional) *kdl.Node {
 		name += "..."
 	}
 	node := kdl.NewNode("arg", kdl.String(name))
+	fs := c.valueUsageKDL(
+		[]string{cmd.FullPath(), "positional " + p.Name},
+		cmdUsageKDL.Entity(node),
+		p,
+	)
 	c.setHelp(node, p)
 	if p.HasDefault {
 		node.SetProp("default", kdl.String(p.Default))
@@ -276,13 +284,17 @@ func (c *converter) positional(cmd *kong.Node, p *kong.Positional) *kdl.Node {
 		node.SetProp("double_dash", kdl.String("automatic"))
 	}
 	c.setEnv(node, p.Tag.Envs)
-	c.setChoices(node, p)
-	c.setComplete(node, p)
-	return node
+	c.setChoices(node, p, fs)
+	c.setComplete(node, p, fs)
+	return node.AddChild(fs.Apply(node)...)
 }
 
-func (c *converter) command(n *kong.Node, order int) *kdl.Node {
+// command returns the node of the command n,
+// which has the position order among its siblings,
+// with usage features of its parent parentUsageKDL.
+func (c *converter) command(n *kong.Node, order int, parentUsageKDL *usagekdl.Set) *kdl.Node {
 	node := kdl.NewNode("cmd", kdl.String(n.Name))
+	fs := c.commandUsageKDL(n, parentUsageKDL.Entity(node))
 	if n.Help != "" {
 		node.SetProp("help", kdl.String(n.Help))
 	}
@@ -311,7 +323,10 @@ func (c *converter) command(n *kong.Node, order int) *kdl.Node {
 	if len(n.Aliases) > 0 {
 		node.AddChild(kdl.NewNode("alias", c.strValues(n.Aliases)...))
 	}
-	return node.AddChild(c.members(n)...)
+	node.AddChild(fs.Apply(node)...)
+	node.AddChild(c.members(n, fs)...)
+	fs.CheckUsed([]string{n.FullPath()})
+	return node
 }
 
 // flagName returns the spellings of the flag f of the command cmd
@@ -393,6 +408,18 @@ func (*converter) setHelp(node *kdl.Node, v *kong.Value) {
 	}
 }
 
+// setCumulative sets `var` of a flag f which accumulates values.
+func (*converter) setCumulative(node *kdl.Node, f *kong.Flag) {
+	if !isCumulative(f.Value) {
+		return
+	}
+	node.SetProp("var", kdl.Bool(true))
+	// usage splits values by the delimiter even where Kong's `\,` escapes it.
+	if sep := separator(f); sep != -1 {
+		node.SetProp("delimiter", kdl.String(string(sep)))
+	}
+}
+
 // setEnv sets the environment variables of a flag or a positional.
 func (c *converter) setEnv(node *kdl.Node, envs []string) {
 	// `env:"-"` stays in the model without kong.DefaultEnvars.
@@ -406,18 +433,24 @@ func (c *converter) setEnv(node *kdl.Node, envs []string) {
 	}
 }
 
-// setChoices sets the possible values of a flag or a positional.
-func (c *converter) setChoices(node *kdl.Node, v *kong.Value) {
-	if v.Enum != "" {
-		node.AddChild(kdl.NewNode("choices", c.strValues(v.EnumSlice())...))
+// setChoices sets the possible values of a flag or a positional with usage features fs.
+func (*converter) setChoices(node *kdl.Node, v *kong.Value, fs *usagekdl.Set) {
+	if choices := fs.Choices(enum(v)); choices != nil {
+		node.AddChild(choices)
 	}
 }
 
-// setComplete sets the completion of a value without choices
-// by docs/mapping.md "Completion of values".
+// setComplete sets the completion of a value with usage features fs:
+// complete of fs, otherwise of a value without choices by docs/mapping.md "Completion of values".
 // Values are not validated by usage, which is lost.
-func (c *converter) setComplete(node *kdl.Node, v *kong.Value) {
-	if v.Enum != "" {
+func (c *converter) setComplete(node *kdl.Node, v *kong.Value, fs *usagekdl.Set) {
+	if complete := fs.Complete(); complete != nil {
+		node.AddChild(complete)
+		return
+	}
+	// usage answers by a closed `complete type` before choices,
+	// so type="none" would hide suggested values (see TestWriteSpec_choicesCompletion).
+	if v.Enum != "" || fs.HasChoices() {
 		return
 	}
 	if typ := completion(c.mappers, v); typ != "" {

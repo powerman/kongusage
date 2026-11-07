@@ -1,6 +1,7 @@
 package kongusage_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/powerman/check"
@@ -28,7 +29,7 @@ cmd "serve" {
 cmd "other"
 `
 	for _, version := range []string{"", kongusage.MinUsageVersion} {
-		got := usagetest.Output(t, version, spec, "complete-word", "-f", "-", "--", "app", "")
+		got := usagetest.Output(t, version, strings.NewReader(spec), "complete-word", "-f", "-", "--", "app", "")
 		// usage 6.12.0–7.3.0 offer the arguments of the default command instead of commands.
 		t.Equal(got, "fast\nslow\n", "usage %q is fixed", version)
 	}

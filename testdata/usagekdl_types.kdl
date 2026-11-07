@@ -1,0 +1,20 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+disable_help_subcommand #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--id <TEST-ID>" help="Value type of a flag." global=#true {
+    complete run="app ids"
+    note "Type."
+}
+flag "--ptr-id <PTR-ID>" help="Pointer to a value type." global=#true {
+    complete run="app ids"
+    note "Type."
+}
+cmd "embed" help="Promoted UsageKDL." display_order=0 disable_help_flag=#true effect="read"
+cmd "value" help="Value receiver." display_order=1 disable_help_flag=#true effect="write" {
+    arg "<pos>" help="Pointer receiver." {
+        help_md "Interchangeable with arg."
+    }
+}

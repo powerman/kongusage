@@ -45,6 +45,14 @@ func takesValue(f *kong.Flag) bool {
 	return !f.IsBool() && !f.IsCounter()
 }
 
+// enum returns the values of the enum of v, or nil when it has none.
+func enum(v *kong.Value) []string {
+	if v.Enum == "" {
+		return nil
+	}
+	return v.EnumSlice()
+}
+
 // placeHolder returns Kong's placeholder of the flag f without the default
 // and without the tail of a slice or a map.
 func placeHolder(f *kong.Flag) string {
@@ -177,32 +185,32 @@ func completion(defaults *kong.Registry, v *kong.Value) string {
 	}
 }
 
-// typeCompletion returns the type of completion of a value of the type t
-// mapped by Kong's default mapper of t, or "" to complete files.
-func typeCompletion(defaults *kong.Registry, t reflect.Type) string {
-	switch t {
+// typeCompletion returns the type of completion of a value of the type typ
+// mapped by Kong's default mapper of typ, or "" to complete files.
+func typeCompletion(defaults *kong.Registry, typ reflect.Type) string {
+	switch typ {
 	case reflect.TypeFor[kong.ChangeDirFlag]():
 		return "dir"
 	case reflect.TypeFor[time.Duration](), reflect.TypeFor[time.Time](), reflect.TypeFor[*urlpkg.URL]():
 		return "none"
 	}
 	var unnamed reflect.Type
-	switch t.Kind() {
+	switch typ.Kind() {
 	case reflect.Slice:
-		unnamed = reflect.SliceOf(t.Elem())
+		unnamed = reflect.SliceOf(typ.Elem())
 	case reflect.Pointer:
-		unnamed = reflect.PointerTo(t.Elem())
+		unnamed = reflect.PointerTo(typ.Elem())
 	default:
-		unnamed = numberType(t.Kind())
+		unnamed = numberType(typ.Kind())
 	}
 	// A named type may have its own mapper, e.g. by implementing kong.MapperValue.
-	if unnamed == nil || !sameMapper(defaults.ForType(t), defaults.ForType(unnamed)) {
+	if unnamed == nil || !sameMapper(defaults.ForType(typ), defaults.ForType(unnamed)) {
 		return ""
 	}
-	if t.Kind() == reflect.Slice || t.Kind() == reflect.Pointer {
+	if typ.Kind() == reflect.Slice || typ.Kind() == reflect.Pointer {
 		// Kong maps elements by the mappers of their types,
 		// which are assumed to be Kong's: they are kept by its unexported registry.
-		return typeCompletion(defaults, t.Elem())
+		return typeCompletion(defaults, typ.Elem())
 	}
 	return "none"
 }

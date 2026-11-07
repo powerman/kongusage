@@ -1,0 +1,34 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+default_subcommand "run"
+disable_help_flag #true
+disable_help_subcommand #true
+about_md "The **app**."
+author "Someone <someone@example.com>"
+license "MIT"
+repository "https://github.com/example/app"
+source_code_link_template "https://github.com/example/app/blob/main/{{path}}"
+logo "APP" style="bold"
+before_help "Before."
+before_long_help "Before long."
+after_help "After."
+after_long_help "After long."
+example "app run" header="Run" help="Runs it." lang="sh"
+example "app run --help"
+exit_code 0 "Success."
+exit_code 2 "Usage error."
+output "report" media_type="application/json" framing="json" help="The report." schema="{}" default=#true hide=#false
+output "log"
+surface "cli"
+available_if "linux" "macos"
+subcommand_help_heading "Commands"
+subcommand_value_name "COMMAND"
+next_line_help #true
+flatten_help #false
+term_width 100
+max_term_width 120
+default_subcommand_help #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+cmd "run" help="Run." display_order=0 disable_help_flag=#true
+cmd "other" help="Other." display_order=1 disable_help_flag=#true

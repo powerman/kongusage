@@ -10,7 +10,7 @@ import (
 	"github.com/powerman/check"
 
 	"github.com/powerman/kongusage"
-	"github.com/powerman/kongusage/internal/usagetest"
+	"github.com/powerman/kongusage/internal/usagecli"
 )
 
 type (
@@ -30,12 +30,12 @@ type (
 func TestMiseMount(tt *testing.T) {
 	tt.Parallel()
 	t := check.T(tt).MustAll()
-	if os.Getenv(usagetest.SkipEnv) != "" {
-		t.Skipf("mise is skipped by %s", usagetest.SkipEnv)
+	if os.Getenv(usagecli.SkipEnv) != "" {
+		t.Skipf("mise is skipped by %s", usagecli.SkipEnv)
 	}
 	mise, err := exec.LookPath("mise")
 	if err != nil {
-		t.Fatalf("mise is required (set %s=1 to skip): %v", usagetest.SkipEnv, err)
+		t.Fatalf("mise is required (set %s=1 to skip): %v", usagecli.SkipEnv, err)
 	}
 
 	dir := t.TempDir()

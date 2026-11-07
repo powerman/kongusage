@@ -6,3 +6,6 @@ import "github.com/alecthomas/kong"
 func Notes(k *kong.Kong) []string {
 	return newConverter(k, Config{}).Notes()
 }
+
+// UsageTimeout limits a run of usage by CheckSpec.
+var UsageTimeout = &usageTimeout

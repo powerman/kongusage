@@ -82,7 +82,7 @@ Properties are given in parentheses, values in angle brackets.
 The root:
 
 - `about_md`, `author`, `license`, `repository`, `source_code_link_template`;
-- `logo`, `style`, `default_subcommand_help`.
+- `logo` (`style`), `default_subcommand_help`.
 
 The root and commands:
 
@@ -105,9 +105,11 @@ Flags and positionals:
 - `hide_short_help`, `hide_long_help`;
 - `complete` (`type`, `run`, `descriptions`, `delegate`),
   which replaces the completion chosen by [Mapping](mapping.md#completion-of-values);
-- `choices` of a value without `enum` only with `strict=#false`, i.e. suggested values;
-  of a value with `enum` only `choice` nodes for its values with `help` or `hide`,
-  merged into the `choices` derived from the `enum`.
+- `choices` (`strict`) with child nodes `choice` (`help`, `hide`):
+  of a value without an enum only with `strict=#false`, i.e. suggested values,
+  which replace the completion chosen by [Mapping](mapping.md#completion-of-values);
+  of a value with an enum only `choice` nodes for its values,
+  merged into the `choices` derived from the enum.
 
 ## Not accepted
 

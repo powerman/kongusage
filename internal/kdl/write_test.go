@@ -219,7 +219,7 @@ func TestWrite_usage(tt *testing.T) {
 
 	usagetest.Lint(t, spec, kongusage.MinUsageVersion)
 	for _, version := range []string{"", kongusage.MinUsageVersion} {
-		out := usagetest.Output(t, version, spec, "generate", "json", "-f", "-")
+		out := usagetest.Output(t, version, strings.NewReader(spec), "generate", "json", "-f", "-")
 		var got struct {
 			Cmd struct {
 				Flags []struct {

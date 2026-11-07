@@ -1,0 +1,30 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+disable_help_subcommand #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+cmd "props" help="Features as properties." display_order=0 subcommand_required=#true disable_help_flag=#true disable_help_subcommand=#true effect="destructive" surface="cli" available_if="linux" subcommand_help_heading="Subs" subcommand_value_name="SUB" next_line_help=#true flatten_help=#true term_width=80 max_term_width=90 {
+    help_md "Help **md**."
+    before_help "B."
+    before_long_help "BL."
+    before_help_md "BM."
+    after_help "A."
+    after_long_help "AL."
+    after_help_md "AM."
+    cmd "sub" help="Sub." display_order=0 disable_help_flag=#true
+}
+cmd "children" help="Features as child nodes." display_order=1 subcommand_required=#true disable_help_flag=#true disable_help_subcommand=#true effect="write" surface="cli" subcommand_help_heading="Subs" subcommand_value_name="SUB" next_line_help=#true flatten_help=#true term_width=80 max_term_width=90 {
+    help_md "Help **md**."
+    before_help "B."
+    before_long_help "BL."
+    before_help_md "BM."
+    after_help "A."
+    after_long_help "AL."
+    after_help_md "AM."
+    example "app children sub"
+    exit_code 1 "Failed."
+    output "log"
+    available_if "linux" "macos"
+    cmd "sub" help="Sub." display_order=0 disable_help_flag=#true
+}
