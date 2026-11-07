@@ -12,8 +12,15 @@ import (
 	"github.com/powerman/kongusage/internal/usagekdl"
 )
 
+// docsEnv enables the tests which parse the docs.
+// The docs do not guarantee their format, so these tests run only on demand.
+const docsEnv = "KONGUSAGE_TEST_DOCS"
+
 // TestSpecs checks docs/usage-features.md "Accepted" lists the accepted features.
 func TestSpecs(tt *testing.T) {
+	if os.Getenv(docsEnv) == "" {
+		tt.Skip("set " + docsEnv + "=1 to check the docs")
+	}
 	tt.Parallel()
 	t := check.T(tt).MustAll()
 
