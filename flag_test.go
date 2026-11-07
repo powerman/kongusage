@@ -39,10 +39,16 @@ type testEnvCLI struct {
 type testConfigCLI struct {
 	testCLI
 
+	Sub   struct{} `cmd:"" help:"Subcommand."`
+	Other struct{} `cmd:"" help:"Other subcommand."`
+
 	cfg kongusage.Config
 }
 
 func (c testConfigCLI) UsageConfig() kongusage.Config { return c.cfg }
+
+// Run makes subcommands optional, so parsing does not fail after the spec is printed.
+func (testConfigCLI) Run() error { return nil }
 
 // newParser returns a parser of cli
 // and a function returning its output and exit code (-1 if no exit) since the last call.
@@ -106,22 +112,22 @@ func TestFlag_BeforeReset(tt *testing.T) {
 		wantOut  string
 		wantErr  string
 	}{
-		{&testCLI{}, []string{"--usage-spec"}, 0, `(?m)^flag --name `, ""},
-		{&testCLI{}, []string{"--usage-spec=true"}, 0, `(?m)^flag --name `, ""},
+		{&testCLI{}, []string{"--usage-spec"}, 0, `(?m)^flag "--name <STRING>" `, ""},
+		{&testCLI{}, []string{"--usage-spec=true"}, 0, `(?m)^flag "--name <STRING>" `, ""},
 		{&testCLI{}, []string{"--usage-spec=false"}, -1, `^$`, ""},
-		{&testCLI{}, []string{"--usage-spec", "--name=x"}, 0, `(?m)^flag --name `, ""},
+		{&testCLI{}, []string{"--usage-spec", "--name=x"}, 0, `(?m)^flag "--name <STRING>" `, ""},
 		{&testCLI{}, []string{"--usage-spec", "x"}, -1, `^$`, `^unexpected argument x$`},
 		{&testCLI{}, []string{"--usage-spec=x"}, -1, `^$`, `^--usage-spec: bool value must be`},
-		{&testPtrCLI{}, []string{"--usage-spec"}, 0, `(?m)^bin `, ""},
+		{&testPtrCLI{}, []string{"--usage-spec"}, 0, `(?m)^bin "test"$`, ""},
 		{&testPtrCLI{}, []string{"--usage-spec=false"}, -1, `^$`, ""},
 		// The spec is printed before the check of required arguments,
 		// which fails only because the test's exit does not stop parsing.
-		{&testRequiredCLI{}, []string{"--usage-spec"}, 0, `(?m)^arg <name>`, `^expected "<name>"$`},
+		{&testRequiredCLI{}, []string{"--usage-spec"}, 0, `(?m)^arg "<name>"$`, `^expected "<name>"$`},
 		{&testRequiredCLI{}, nil, -1, `^$`, `^expected "<name>"$`},
 		{
 			&testConfigCLI{cfg: kongusage.Config{NoDisplayOrder: true}},
 			[]string{"--usage-spec"},
-			0, `(?m)^flag --name `, "",
+			0, `(?m)^flag "--name <STRING>" `, "",
 		},
 	}
 	for _, tc := range tests {
@@ -137,6 +143,31 @@ func TestFlag_BeforeReset(tt *testing.T) {
 			} else {
 				t.Match(err, tc.wantErr)
 			}
+		})
+	}
+}
+
+// TestFlag_BeforeReset_spec checks the whole spec printed by the flag.
+func TestFlag_BeforeReset_spec(tt *testing.T) {
+	tt.Parallel()
+
+	tests := []struct {
+		name string
+		cli  any
+	}{
+		{"flag", &testCLI{}},
+		{"flag_config", &testConfigCLI{cfg: kongusage.Config{NoDisplayOrder: true}}},
+		{"flag_no_config", &testConfigCLI{}},
+	}
+	for _, tc := range tests {
+		tt.Run(tc.name, func(tt *testing.T) {
+			tt.Parallel()
+			t := check.T(tt).MustAll()
+
+			out, exit, err := parse(t, tc.cli, "--usage-spec")
+			t.Nil(err)
+			t.Equal(exit, 0)
+			golden(t, tc.name, out)
 		})
 	}
 }

@@ -3,14 +3,15 @@ package kdl_test
 import (
 	"bytes"
 	"encoding/json"
-	"os/exec"
 	"strings"
 	"testing"
 
 	gokdl "github.com/njreid/gokdl2"
 	"github.com/powerman/check"
 
+	"github.com/powerman/kongusage"
 	"github.com/powerman/kongusage/internal/kdl"
+	"github.com/powerman/kongusage/internal/usagetest"
 )
 
 // Strings which need escaping or sanitizing, with the strings they become.
@@ -201,14 +202,9 @@ func TestWrite_usage(tt *testing.T) {
 	tt.Parallel()
 	t := check.T(tt).MustAll()
 
-	usage, err := exec.LookPath("usage")
-	if err != nil {
-		t.Skip("usage is not in PATH")
-	}
-
 	nodes := make([]*kdl.Node, 0, 3+len(testStrings))
 	nodes = append(nodes,
-		kdl.NewNode("min_usage_version", kdl.String("6.12.0")),
+		kdl.NewNode("min_usage_version", kdl.String(kongusage.MinUsageVersion)),
 		kdl.NewNode("bin", kdl.String("app")),
 		kdl.NewNode("about", kdl.String("App.")),
 	)
@@ -221,25 +217,20 @@ func TestWrite_usage(tt *testing.T) {
 	}
 	spec := write(t, nodes...)
 
-	cmd := exec.CommandContext(tt.Context(), usage, "lint", "--warnings-as-errors", "-")
-	cmd.Stdin = strings.NewReader(spec)
-	out, err := cmd.CombinedOutput()
-	t.Nil(err, string(out))
-
-	cmd = exec.CommandContext(tt.Context(), usage, "generate", "json", "-f", "-")
-	cmd.Stdin = strings.NewReader(spec)
-	out, err = cmd.Output()
-	t.Nil(err)
-	var got struct {
-		Cmd struct {
-			Flags []struct {
-				HelpLong string `json:"help_long"`
-			} `json:"flags"`
-		} `json:"cmd"`
-	}
-	t.Nil(json.Unmarshal(out, &got))
-	t.Len(got.Cmd.Flags, len(testStrings))
-	for i, tc := range testStrings {
-		t.Equal(got.Cmd.Flags[i].HelpLong, "x"+tc.want+"x", tc.name)
+	usagetest.Lint(t, spec, kongusage.MinUsageVersion)
+	for _, version := range []string{"", kongusage.MinUsageVersion} {
+		out := usagetest.Output(t, version, spec, "generate", "json", "-f", "-")
+		var got struct {
+			Cmd struct {
+				Flags []struct {
+					HelpLong string `json:"help_long"`
+				} `json:"flags"`
+			} `json:"cmd"`
+		}
+		t.Nil(json.Unmarshal([]byte(out), &got))
+		t.Len(got.Cmd.Flags, len(testStrings))
+		for i, tc := range testStrings {
+			t.Equal(got.Cmd.Flags[i].HelpLong, "x"+tc.want+"x", version, tc.name)
+		}
 	}
 }

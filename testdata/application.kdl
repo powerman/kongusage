@@ -1,0 +1,7 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+about "The app."
+flag "-h --help" help="Show context-sensitive help."
+flag "--verbose" help="Be verbose."
+arg "<file>" help="File to read."

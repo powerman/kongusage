@@ -1,0 +1,25 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+flag "-h --help" help="Show context-sensitive help."
+cmd "serve" help="Start a server." long_help="Serves files\nover HTTP." display_order=0 {
+    alias "s" "srv"
+}
+cmd "remote" help="Manage remotes." display_order=1 subcommand_required=#true {
+    cmd "add" help="Add a remote." display_order=0
+    cmd "rm" help="Remove a remote." display_order=1
+}
+cmd "debug" help="Debug." hide=#true display_order=2
+cmd "tool" help="Tool." display_order=3 {
+    cmd "secret" help="Secret." hide=#true display_order=0
+}
+cmd "val-run" help="Run on a value receiver." display_order=4 {
+    cmd "sub" help="Sub." display_order=0
+}
+cmd "opt" help="Run or choose a subcommand." display_order=5 {
+    cmd "sub" help="Sub." display_order=0
+}
+cmd "def" help="With a default subcommand." display_order=6 {
+    cmd "a" help="A." display_order=0
+    cmd "b" help="B." display_order=1
+}

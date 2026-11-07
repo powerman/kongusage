@@ -1,0 +1,11 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+flag "-h --help" help="Show context-sensitive help."
+arg "<required>" help="Required."
+arg "<enum>" help="Enum." {
+    choices "a" "b"
+}
+arg "[optional]" help="Optional."
+arg "[default]" help="Default x." hide_default_value=#true default="x" env="APP_D"
+arg "[rest]..." help="Rest."

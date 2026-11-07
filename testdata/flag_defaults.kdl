@@ -1,0 +1,11 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+flag "-h --help" help="Show context-sensitive help."
+flag "--string <STRING>" help="String." default="x y"
+flag "--int <INT>" help="Int." default="8080"
+flag "--bool-true" help="Bool true." default=#true
+flag "--bool-yes" help="Bool yes." default=#true
+flag "--bool-false" help="Bool false." default=#false
+flag "--bool-val" help="MapperValue with IsBool." default=#true
+flag "--count" help="Counter." default="2" count=#true

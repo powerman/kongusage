@@ -47,6 +47,8 @@ jobs:
           - {os: windows-11-arm} # Windows ARM64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    env:
+      KONGUSAGE_TEST_SKIP_USAGE: 1
 
     steps:
       - uses: actions/checkout@v7
@@ -94,6 +96,7 @@ jobs:
           mkdir -p ~/go ~/.cache/go-build
           V=$(awk '$1=="toolchain"{v=$2}$1=="go"&&!v{v=$2}END{sub(/^go/,"",v);print v}' go.mod)
           docker run -i --rm --platform "$PLATFORM" \
+            -e KONGUSAGE_TEST_SKIP_USAGE=1 \
             -w /workspace \
             -v "$PWD:/workspace" \
             -v "$HOME/.cache/go-build:/root/.cache/go-build" \

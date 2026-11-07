@@ -43,6 +43,12 @@ url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_
 url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924880"
 provenance = "github-attestations"
 
+[tools.actionlint."platforms.windows-arm64"]
+checksum = "sha256:cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_windows_arm64.zip"
+url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924915"
+provenance = "github-attestations"
+
 [tools.actionlint."platforms.windows-x64"]
 checksum = "sha256:6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9"
 url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_windows_amd64.zip"
@@ -88,6 +94,12 @@ provenance = "github-attestations"
 checksum = "sha256:a2f86418f4350ae6e9ec60d5000bdf7665728436946a97fc27fe50e6ae752682"
 url = "https://github.com/cli/cli/releases/download/v2.103.3/gh_2.103.3_macOS_amd64.zip"
 url_api = "https://api.github.com/repos/cli/cli/releases/assets/679195693"
+provenance = "github-attestations"
+
+[tools.gh."platforms.windows-arm64"]
+checksum = "sha256:197211c98687d7770ac331fe8a3b6c198c389108c1536cdbedf659fe4703e484"
+url = "https://github.com/cli/cli/releases/download/v2.103.3/gh_2.103.3_windows_arm64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/679195799"
 provenance = "github-attestations"
 
 [tools.gh."platforms.windows-x64"]
@@ -137,6 +149,12 @@ checksum_source = "mise-versions"
 url = "https://github.com/orhun/git-cliff/releases/download/v2.14.2/git-cliff-2.14.2-x86_64-apple-darwin.tar.gz"
 url_api = "https://api.github.com/repos/orhun/git-cliff/releases/assets/573484837"
 
+[tools.git-cliff."platforms.windows-arm64"]
+checksum = "sha256:5fb69daea6e47daebd91abbd4c24cfb74c13547c96fa7e5a252f8f7a3c7585aa"
+checksum_source = "mise-versions"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.14.2/git-cliff-2.14.2-aarch64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/orhun/git-cliff/releases/assets/573492497"
+
 [tools.git-cliff."platforms.windows-x64"]
 checksum = "sha256:6ece2112b3f4af462190ecbea4aeb1315fff6af415629b597f84319073c31131"
 checksum_source = "mise-versions"
@@ -171,6 +189,10 @@ url = "https://dl.google.com/go/go1.27.3.darwin-arm64.tar.gz"
 [tools.go."platforms.macos-x64"]
 checksum = "sha256:b6f8e931e4ab497fcde6da8ae4499a58f9d258e55c8a80824a516eae5950a750"
 url = "https://dl.google.com/go/go1.27.3.darwin-amd64.tar.gz"
+
+[tools.go."platforms.windows-arm64"]
+checksum = "sha256:c507872ff21f8a7cd3c1c217b059c6f7271a4a9d8e692810ef9dd3e1f601197c"
+url = "https://dl.google.com/go/go1.27.3.windows-arm64.zip"
 
 [tools.go."platforms.windows-x64"]
 checksum = "sha256:f26081f438319757f8a1b46d7d0b2c5ec7583d4038e485e0aa725cfde7885fff"
@@ -215,6 +237,12 @@ provenance = "github-attestations"
 checksum = "sha256:767b899a28285e88ded2823d5dcc4bc5ef681173eb2d80f029a7b17ee4ece3b8"
 url = "https://github.com/golangci/golangci-lint/releases/download/v2.15.0/golangci-lint-2.15.0-darwin-amd64.tar.gz"
 url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/647132753"
+provenance = "github-attestations"
+
+[tools.golangci-lint."platforms.windows-arm64"]
+checksum = "sha256:4fb8988abf186158e30af1b8a0fb3671cf2cb02bc91d7e6ce6996f4c1e922e9a"
+url = "https://github.com/golangci/golangci-lint/releases/download/v2.15.0/golangci-lint-2.15.0-windows-arm64.zip"
+url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/647132633"
 provenance = "github-attestations"
 
 [tools.golangci-lint."platforms.windows-x64"]
@@ -264,6 +292,12 @@ checksum_source = "mise-versions"
 url = "https://github.com/gotestyourself/gotestsum/releases/download/v1.13.0/gotestsum_1.13.0_darwin_amd64.tar.gz"
 url_api = "https://api.github.com/repos/gotestyourself/gotestsum/releases/assets/291996829"
 
+[tools.gotestsum."platforms.windows-arm64"]
+checksum = "sha256:72a59200f83b3204cd59fd417e384db0543c5511d7a9e38957e74a4035950943"
+checksum_source = "mise-versions"
+url = "https://github.com/gotestyourself/gotestsum/releases/download/v1.13.0/gotestsum_1.13.0_windows_arm64.tar.gz"
+url_api = "https://api.github.com/repos/gotestyourself/gotestsum/releases/assets/291996839"
+
 [tools.gotestsum."platforms.windows-x64"]
 checksum = "sha256:fd5a6dc69e46a0970593e70d85a7e75f16714e9c61d6d72ccc324eb82df5bb8a"
 checksum_source = "mise-versions"
@@ -298,6 +332,10 @@ url = "https://nodejs.org/dist/v24.22.2/node-v24.22.2-darwin-arm64.tar.gz"
 [tools.node."platforms.macos-x64"]
 checksum = "sha256:d5e336d588c45be0c37dbd52cc29895593009ca4997a77a1fd02815131ed0e52"
 url = "https://nodejs.org/dist/v24.22.2/node-v24.22.2-darwin-x64.tar.gz"
+
+[tools.node."platforms.windows-arm64"]
+checksum = "sha256:f47968c213105077f64c6510f007632c0ca2574802a0b5067c327c49abe1c468"
+url = "https://nodejs.org/dist/v24.22.2/node-v24.22.2-win-arm64.zip"
 
 [tools.node."platforms.windows-x64"]
 checksum = "sha256:ca1bff5d8ead13c9f2ea404a176db46bd430704d5b5113734049fa365e7799e2"
@@ -342,6 +380,12 @@ provenance = "github-attestations"
 checksum = "sha256:f2c52f20f631a31011a6e33e3812d136db89c4a5c1d23123b92cbe62ecec82a6"
 url = "https://github.com/pnpm/pnpm/releases/download/v12.16.1/pnpm-darwin-x64.tar.gz"
 url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/681916060"
+provenance = "github-attestations"
+
+[tools.pnpm."platforms.windows-arm64"]
+checksum = "sha256:9b401cc731e86d70de4407621d4916a5ff3ad7c3de86b42d623280b629af9dda"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.16.1/pnpm-win32-arm64.zip"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/681916047"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.windows-x64"]
@@ -390,10 +434,121 @@ checksum = "sha256:898122cde3a0b1cd1cbc2d52d3624f23338218c91b5ddb71518236a4c2c10
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-darwin-x86_64.gz"
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257323116"
 
+[tools.taplo."platforms.windows-arm64"]
+checksum = "sha256:65a50c5d3b78f6014e6bc6d64eb6dc1d4992bc236589c9bb29e5609fc3454674"
+url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-windows-aarch64.zip"
+url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257322977"
+
 [tools.taplo."platforms.windows-x64"]
 checksum = "sha256:1615eed140039bd58e7089109883b1c434de5d6de8f64a993e6e8c80ca57bdf9"
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-windows-x86_64.zip"
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257323062"
+
+[[tools.usage]]
+version = "7.1.4"
+backend = "packslip:github.com/jdx/usage"
+specifiers = ["latest"]
+
+[tools.usage."platforms.linux-arm64"]
+checksum = "sha256:2f25a923192210891b19d2ea4b4dbf6fe6c851ba8067b5ffd646517026e1f656"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-aarch64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.linux-arm64-musl"]
+checksum = "sha256:c8256c38ec82a28288326d48d3c8fcfa56e1fb1c76e82f66c58ad5fa18965e1b"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-aarch64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.linux-x64"]
+checksum = "sha256:eb213eb6c1cbc6896d7f8b627af984a9c1734d67bdf703788038bc50c326c676"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-x86_64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.linux-x64-musl"]
+checksum = "sha256:662fe04a2a1b7947e73b7ad4d608f50b96a500e5bc2c9d1961e28894a8c87f5d"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-x86_64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.macos-arm64"]
+checksum = "sha256:cae1865b2bb4eb8c22087381d4fbc29344837960c71dbf865dc55296c19d535d"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-universal-apple-darwin.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.macos-x64"]
+checksum = "sha256:cae1865b2bb4eb8c22087381d4fbc29344837960c71dbf865dc55296c19d535d"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-universal-apple-darwin.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.windows-arm64"]
+checksum = "sha256:1ad0c5b4b4e72f7564b93503d604cb496cd4e979a394405e217352601f30382f"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-aarch64-pc-windows-msvc.zip"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.windows-x64"]
+checksum = "sha256:3254065ef86acb0131be75909ee9010cd41de22e10bcbbc1c1829494b9c7a23f"
+url = "https://github.com/jdx/usage/releases/download/v7.1.4/usage-x86_64-pc-windows-msvc.zip"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[[tools.usage]]
+version = "6.12.0"
+backend = "packslip:github.com/jdx/usage"
+specifiers = ["6.12.0"]
+
+[tools.usage."platforms.linux-arm64"]
+checksum = "sha256:6e9be5caa7dc8a484fc488cf5ed6fcde5d2b3271943ccc039e0c08041a8f8bf8"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-aarch64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.linux-arm64-musl"]
+checksum = "sha256:28729924e46bfad1112a7ec35003cdf074d2686346ddaa2d0f4206c1f66a2827"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-aarch64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.linux-x64"]
+checksum = "sha256:c82b39ca9c64e3256284667ca8ddd4c27b7141d842ba054a645ee73d6ab99b17"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-x86_64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.linux-x64-musl"]
+checksum = "sha256:5cab69ffacde3f700bd74095f89a4879cea591a8c0656f3104786ed1d0df218a"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-x86_64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.macos-arm64"]
+checksum = "sha256:1e43be745db2fd81259e2b0e68d689d7f55b93da815f452c2154710f6de6ec52"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-universal-apple-darwin.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.macos-x64"]
+checksum = "sha256:1e43be745db2fd81259e2b0e68d689d7f55b93da815f452c2154710f6de6ec52"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-universal-apple-darwin.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.windows-arm64"]
+checksum = "sha256:2cdb29a06edb66c4ed4cba0136ff6bed394139410f346f77673a66268a0f39fd"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-aarch64-pc-windows-msvc.zip"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
+
+[tools.usage."platforms.windows-x64"]
+checksum = "sha256:bc9e362fd5169a9a13eb943963c905bb60f3fd2bd1076336c2beb2878209bc24"
+url = "https://github.com/jdx/usage/releases/download/v6.12.0/usage-x86_64-pc-windows-msvc.zip"
+signer = "sigstore-oidc:https://github.com/jdx/usage/.github/workflows/publish-cli.yml"
+repository_ids = { repository = "677629099" }
 
 [[tools.yamlfmt]]
 version = "0.21.0"
@@ -435,6 +590,12 @@ checksum = "sha256:060e943bcb8583c456810eb1ff4721b4f46c4a0c1a4432449d5dc3bbfe29a
 checksum_source = "mise-versions"
 url = "https://github.com/google/yamlfmt/releases/download/v0.21.0/yamlfmt_0.21.0_Darwin_x86_64.tar.gz"
 url_api = "https://api.github.com/repos/google/yamlfmt/releases/assets/336650207"
+
+[tools.yamlfmt."platforms.windows-arm64"]
+checksum = "sha256:c1e64d1c72ca8986bc5b8c8edd4ec89f0627804e7e08f8de9f4b484cb5cad897"
+checksum_source = "mise-versions"
+url = "https://github.com/google/yamlfmt/releases/download/v0.21.0/yamlfmt_0.21.0_Windows_arm64.tar.gz"
+url_api = "https://api.github.com/repos/google/yamlfmt/releases/assets/336650202"
 
 [tools.yamlfmt."platforms.windows-x64"]
 checksum = "sha256:07f80ce5d741eb4b0a9380ac78a19c7cb5bd44e2a9a47a5a04839e3ba54dd463"

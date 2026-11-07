@@ -8,3 +8,5 @@
 # /internal/upstream/** vendored
 go.sum binary
 *.*.go binary
+# Golden files are compared byte by byte on every platform.
+/testdata/*.kdl -text

@@ -1,11 +1,11 @@
 package kongusage
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/alecthomas/kong"
-	upstream "github.com/gaojunran/usage-integrations/packages/kong-usage"
+
+	"github.com/powerman/kongusage/internal/kdl"
 )
 
 // WriteSpec writes the usage spec of the CLI k to w in KDL.
@@ -19,13 +19,7 @@ func WriteSpec(w io.Writer, k *kong.Kong, cfg Config) error {
 		panic(err)
 	}
 
-	// TODO: Replace the upstream generator, which ignores cfg:
-	//   - Convert k to an internal tree of usage spec nodes by docs/mapping.md.
-	//     It needs *kong.Kong, not just k.Model: WithHyphenPrefixedParameters is kept
-	//     in an unexported field only.
-	//     Collect a note for every silent fix of the Kong model (docs/design.md),
-	//     e.g. a placeholder replaced as docs/mapping.md "Value names" says;
-	//     WriteSpec drops the notes, CheckSpec logs them.
+	// TODO: Merge usage features (stage 5):
 	//   - Build the tree of usage features as docs/usage-features.md "Merge" describes:
 	//     UsageKDL of the root, then top-down for every field UsageKDL of its type
 	//     unless an ancestor has described its node, then its tag merged into the node
@@ -45,10 +39,5 @@ func WriteSpec(w io.Writer, k *kong.Kong, cfg Config) error {
 	//     be a command of another one, as usage drops them on mount;
 	//     about_md becomes help_md, as usage turns about of a plugin into help.
 	//   - Add the tree to the spec derived from Kong.
-	//   - Emit min_usage_version: the oldest supported usage version (docs/design.md).
-	//   - Emit the tree as KDL by github.com/njreid/gokdl2 hidden behind an internal wrapper,
-	//     which sanitizes strings (its escaping of control characters is not valid KDL v2).
-	_ = cfg
-	_, err = fmt.Fprint(w, upstream.GenerateKDL(k))
-	return err
+	return kdl.Write(w, convert(k, cfg))
 }
