@@ -1,7 +1,7 @@
 package kongusage
 
 import (
-	"reflect"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -17,24 +17,27 @@ const MinUsageVersion = "6.12.0"
 type converter struct {
 	cfg            Config
 	hyphenPrefixed bool
+	version        string
+	helpFlag       *kong.Flag
+	// notes describe silent fixes of the Kong model (docs/design.md).
+	notes []string
 }
 
-// convert returns the top-level nodes of the usage spec of k.
-func convert(k *kong.Kong, cfg Config) []*kdl.Node {
+// convert returns the top-level nodes of the usage spec of k
+// and notes on the parts of the Kong model it has fixed silently.
+func convert(k *kong.Kong, cfg Config) (nodes []*kdl.Node, notes []string) {
 	c := &converter{
 		cfg:            cfg,
 		hyphenPrefixed: hyphenPrefixed(k),
+		version:        versionVar(k),
+		helpFlag:       k.Model.HelpFlag,
 	}
-	return c.application(k.Model)
+	return c.application(k.Model), c.notes
 }
 
-// hyphenPrefixed reports whether k was built with kong.WithHyphenPrefixedParameters(true).
-// Kong keeps the option in an unexported field only.
-// A newer Kong without the field gives false, which loses only `allow_hyphen_values`
-// and is detected by the tests.
-func hyphenPrefixed(k *kong.Kong) bool {
-	f := reflect.ValueOf(k).Elem().FieldByName("allowHyphenated")
-	return f.IsValid() && f.Kind() == reflect.Bool && f.Bool()
+// notef adds a note on a silent fix of the entity of the command cmd.
+func (c *converter) notef(cmd *kong.Node, entity, format string, args ...any) {
+	c.notes = append(c.notes, cmd.FullPath()+": "+entity+": "+fmt.Sprintf(format, args...))
 }
 
 func (c *converter) application(app *kong.Application) []*kdl.Node {
@@ -49,7 +52,16 @@ func (c *converter) application(app *kong.Application) []*kdl.Node {
 	if app.Detail != "" {
 		nodes = append(nodes, kdl.NewNode("long_about", kdl.String(app.Detail)))
 	}
-	// TODO(stage 3): `version`, see docs/mapping.md "Version flag".
+	if c.version != "" {
+		nodes = append(nodes, kdl.NewNode("version", kdl.String(c.version)))
+	}
+	nodes = append(nodes, kdl.NewNode("disable_help_flag", kdl.Bool(true)))
+	if hasSubcommands(app.Node) {
+		nodes = append(nodes, kdl.NewNode("disable_help_subcommand", kdl.Bool(true)))
+	}
+	if c.version != "" {
+		nodes = append(nodes, kdl.NewNode("disable_version_flag", kdl.Bool(true)))
+	}
 	return append(nodes, c.members(app.Node)...)
 }
 
@@ -60,7 +72,7 @@ func (c *converter) members(n *kong.Node) []*kdl.Node {
 		nodes = append(nodes, c.flag(n, f))
 	}
 	for _, p := range n.Positional {
-		nodes = append(nodes, c.positional(p))
+		nodes = append(nodes, c.positional(n, p))
 	}
 	order := 0
 	for _, child := range n.Children {
@@ -76,16 +88,10 @@ func (c *converter) members(n *kong.Node) []*kdl.Node {
 }
 
 func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
-	takesValue := !f.IsBool() && !f.IsCounter()
+	isHelp := f == c.helpFlag
+	isVersion := isVersionFlag(f)
 
-	name := "--" + f.Name
-	if f.Short != 0 {
-		name = "-" + string(f.Short) + " " + name
-	}
-	if takesValue {
-		name += " <" + valueName(f) + ">"
-	}
-	node := kdl.NewNode("flag", kdl.String(name))
+	node := kdl.NewNode("flag", kdl.String(c.flagName(cmd, f)))
 
 	c.setHelp(node, f.Value)
 	// Kong turns required on and-group members into required of the whole group.
@@ -106,11 +112,29 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 	}
 	if isCumulative(f.Value) {
 		node.SetProp("var", kdl.Bool(true))
+		if sep := separator(f); sep != -1 {
+			node.SetProp("delimiter", kdl.String(string(sep)))
+		}
 	}
-	if takesValue && c.hyphenPrefixed {
+	switch {
+	case isHelp:
+		node.SetProp("action", kdl.String("help"))
+	case isVersion:
+		node.SetProp("action", kdl.String("version"))
+	case f.IsBool() && !f.IsCounter():
+		node.SetProp("bool_value", kdl.Bool(true))
+	}
+	// Kong accepts flags of ancestors after a subcommand.
+	if isHelp || isVersion || hasSubcommands(cmd) {
+		node.SetProp("global", kdl.Bool(true))
+	}
+	if takesValue(f) && c.hyphenPrefixed {
 		node.SetProp("allow_hyphen_values", kdl.Bool(true))
 	}
-	if !isVersionFlag(f) {
+	if len(f.Aliases) > 0 {
+		node.AddChild(kdl.NewNode("alias", c.strValues(aliases(f))...).SetProp("hide", kdl.Bool(true)))
+	}
+	if !isVersion {
 		c.setEnv(node, f.Tag.Envs)
 	}
 	c.setChoices(node, f.Value)
@@ -119,10 +143,12 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag) *kdl.Node {
 	return node
 }
 
-func (c *converter) positional(p *kong.Positional) *kdl.Node {
-	name := "[" + p.Name + "]"
+func (c *converter) positional(cmd *kong.Node, p *kong.Positional) *kdl.Node {
+	name := c.positionalName(cmd, p)
 	if p.Required {
-		name = "<" + p.Name + ">"
+		name = "<" + name + ">"
+	} else {
+		name = "[" + name + "]"
 	}
 	if isCumulative(p) {
 		name += "..."
@@ -155,10 +181,76 @@ func (c *converter) command(n *kong.Node, order int) *kdl.Node {
 	if subcommandRequired(n) {
 		node.SetProp("subcommand_required", kdl.Bool(true))
 	}
+	node.SetProp("disable_help_flag", kdl.Bool(true))
+	if hasSubcommands(n) {
+		node.SetProp("disable_help_subcommand", kdl.Bool(true))
+	}
 	if len(n.Aliases) > 0 {
 		node.AddChild(kdl.NewNode("alias", c.strValues(n.Aliases)...))
 	}
 	return node.AddChild(c.members(n)...)
+}
+
+// flagName returns the spellings of the flag f of the command cmd
+// followed by its value name, if it takes one.
+func (c *converter) flagName(cmd *kong.Node, f *kong.Flag) string {
+	name := "--" + f.Name
+	if f.Short != 0 {
+		name = "-" + string(f.Short) + " " + name
+	}
+	if takesValue(f) {
+		name += " <" + c.valueName(cmd, f) + ">"
+	}
+	return name
+}
+
+// valueName returns the value name of the flag f of the command cmd
+// by docs/mapping.md "Value names".
+func (c *converter) valueName(cmd *kong.Node, f *kong.Flag) string {
+	orig := placeHolder(f)
+	name := trimAngles(orig)
+	var reason string
+	switch {
+	case name == "":
+		reason = "is empty"
+	case hasSpace(name):
+		reason = "has whitespace, which usage refuses in a value name"
+	case hasEllipsis(name):
+		reason = "has an ellipsis, which usage refuses in a value name"
+	default:
+		return name
+	}
+	name = plainPlaceHolder(f)
+	fix := "the placeholder tag of the flag"
+	if _, ok := f.Mapper.(kong.PlaceHolderProvider); ok {
+		fix = "PlaceHolder of its mapper"
+	}
+	c.notef(cmd, "flag --"+f.Name, "placeholder %q %s, so the spec uses %q; change %s",
+		orig, reason, name, fix)
+	return name
+}
+
+// positionalName returns the name of the positional p of the command cmd in the spec.
+// Only a name tag gives a name usage cannot take: it is fixed as a value name of a flag,
+// except whitespace, which usage takes in the name of a positional,
+// and the replacement is in lower case, as names of positionals usually are.
+func (c *converter) positionalName(cmd *kong.Node, p *kong.Positional) string {
+	name := trimAngles(p.Name)
+	var reason string
+	switch {
+	case name == "":
+		reason = "is empty"
+	case hasEllipsis(name):
+		reason = "has an ellipsis, which usage takes as a mark of a variadic positional"
+	default:
+		return name
+	}
+	value := *p
+	value.Name = "arg" // Used for a type without a name, e.g. []string.
+	name = strings.ToLower(plainPlaceHolder(&kong.Flag{Value: &value}))
+	c.notef(cmd, "positional "+p.Name, "the name %q %s, so the spec uses %q; change the name tag",
+		p.Name, reason, name)
+	return name
 }
 
 // setHelp sets setHelp of a flag or a positional

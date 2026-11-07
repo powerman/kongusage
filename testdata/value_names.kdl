@@ -1,0 +1,18 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--int <INT>" help="Default int." default="8080"
+flag "--string <STRING>" help="Default string." default="x"
+flag "--map <KEY=VALUE>" help="Default map." default="a=1" var=#true delimiter=";"
+flag "--angles <FILE>" help="Angles."
+flag "--twice <<FILE>>" help="Angles twice."
+flag "--tags <TAG>" help="Slice." default="a" var=#true delimiter=","
+flag "--space <STRING>" help="Whitespace."
+flag "--nbsp <STRING>" help="No-break space."
+flag "--empty <STRING>" help="Empty."
+flag "--dots <TEST-NAMED-SLICE>" help="Dots." var=#true delimiter=","
+flag "--ellipsis <KEY=VALUE>" help="Ellipsis." var=#true delimiter=";"
+flag "--mapper <HOST>" help="Mapper."
+flag "--bad-map <STRING>" help="Bad mapper."

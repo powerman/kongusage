@@ -3,18 +3,71 @@ package kongusage
 import (
 	"reflect"
 	"slices"
+	"unicode/utf8"
 
 	"github.com/alecthomas/kong"
 )
+
+// versionVar returns the variable "version" given to k by kong.Vars,
+// which kong.VersionFlag prints.
+// Kong keeps the variables in an unexported field only.
+// A newer Kong without the field gives "", which loses only `version`
+// and is detected by the tests.
+func versionVar(k *kong.Kong) string {
+	vars := reflect.ValueOf(k).Elem().FieldByName("vars")
+	if !vars.IsValid() || vars.Kind() != reflect.Map || vars.Type().Key().Kind() != reflect.String {
+		return ""
+	}
+	v := vars.MapIndex(reflect.ValueOf("version").Convert(vars.Type().Key()))
+	if !v.IsValid() || v.Kind() != reflect.String {
+		return ""
+	}
+	return v.String()
+}
+
+// hyphenPrefixed reports whether k was built with kong.WithHyphenPrefixedParameters(true).
+// Kong keeps the option in an unexported field only.
+// A newer Kong without the field gives false, which loses only `allow_hyphen_values`
+// and is detected by the tests.
+func hyphenPrefixed(k *kong.Kong) bool {
+	f := reflect.ValueOf(k).Elem().FieldByName("allowHyphenated")
+	return f.IsValid() && f.Kind() == reflect.Bool && f.Bool()
+}
 
 func isVersionFlag(f *kong.Flag) bool {
 	return f.Target.Type() == reflect.TypeFor[kong.VersionFlag]()
 }
 
-// valueName returns Kong's placeholder of the flag f
-// without the default and without the tail of a slice or a map.
-// TODO(stage 3): docs/mapping.md "Value names".
-func valueName(f *kong.Flag) string {
+// takesValue reports whether the flag f takes a value, as Kong's help shows it.
+func takesValue(f *kong.Flag) bool {
+	return !f.IsBool() && !f.IsCounter()
+}
+
+// placeHolder returns Kong's placeholder of the flag f without the default
+// and without the tail of a slice or a map.
+func placeHolder(f *kong.Flag) string {
+	return formatPlaceHolder(f, func(flag *kong.Flag) {
+		if _, ok := flag.Mapper.(kong.PlaceHolderProvider); !ok && flag.PlaceHolder == "" {
+			flag.HasDefault = false
+		}
+	})
+}
+
+// plainPlaceHolder returns the placeholder Kong gives the flag f
+// without a placeholder, a default and a mapper providing a placeholder,
+// and without the tail of a slice or a map:
+// "KEY=VALUE" for a map, otherwise the name of its Go type or of the flag in upper case.
+func plainPlaceHolder(f *kong.Flag) string {
+	return formatPlaceHolder(f, func(flag *kong.Flag) {
+		flag.Mapper = nil
+		flag.PlaceHolder = ""
+		flag.HasDefault = false
+	})
+}
+
+// formatPlaceHolder returns Kong's placeholder of a copy of the flag f changed by edit,
+// without the tail of a slice or a map.
+func formatPlaceHolder(f *kong.Flag, edit func(*kong.Flag)) string {
 	tag := *f.Tag
 	tag.Sep = -1
 	tag.MapSep = -1
@@ -23,10 +76,21 @@ func valueName(f *kong.Flag) string {
 	flag := *f
 	flag.Value = &value
 	value.Flag = &flag
-	if _, ok := f.Mapper.(kong.PlaceHolderProvider); !ok && f.PlaceHolder == "" {
-		value.HasDefault = false
-	}
+	edit(&flag)
 	return flag.FormatPlaceHolder()
+}
+
+// aliases returns the spellings of the aliases of the flag f, as Kong derives them.
+func aliases(f *kong.Flag) []string {
+	names := make([]string, len(f.Aliases))
+	for i, alias := range f.Aliases {
+		if utf8.RuneCountInString(alias) == 1 {
+			names[i] = "-" + alias
+		} else {
+			names[i] = "--" + alias
+		}
+	}
+	return names
 }
 
 // negation returns the negative spelling of a negatable flag, as Kong derives it.
@@ -47,6 +111,23 @@ func isCumulative(v *kong.Value) bool {
 	default:
 		return false
 	}
+}
+
+// separator returns the separator Kong splits each value of a slice or map flag f by,
+// or -1 when Kong does not split them.
+// A custom mapper of a slice or a map is assumed to split them as Kong's mappers do.
+func separator(f *kong.Flag) rune {
+	if f.Target.Kind() == reflect.Map {
+		return f.Tag.MapSep
+	}
+	return f.Tag.Sep
+}
+
+// hasSubcommands reports whether n has child commands, hidden ones included.
+func hasSubcommands(n *kong.Node) bool {
+	return slices.ContainsFunc(n.Children, func(child *kong.Node) bool {
+		return child.Type == kong.CommandNode
+	})
 }
 
 // hasRun reports whether v or its address has the method Run, as Kong looks it up.

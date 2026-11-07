@@ -1,0 +1,19 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+disable_help_subcommand #true
+flag "--root <STRING>" help="Root flag." global=#true
+cmd "group" help="Has subcommands." display_order=0 subcommand_required=#true disable_help_flag=#true disable_help_subcommand=#true {
+    flag "--mid <STRING>" help="Mid flag." global=#true
+    cmd "leaf" help="Leaf." display_order=0 disable_help_flag=#true {
+        flag "--own <STRING>" help="Leaf flag."
+    }
+}
+cmd "leaf" help="Leaf." display_order=1 disable_help_flag=#true {
+    flag "--own <STRING>" help="Leaf flag."
+}
+cmd "tool" help="Only a hidden subcommand." display_order=2 disable_help_flag=#true disable_help_subcommand=#true {
+    flag "--flag" help="Flag." bool_value=#true global=#true
+    cmd "secret" help="Secret." hide=#true display_order=0 disable_help_flag=#true
+}

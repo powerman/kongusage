@@ -1,0 +1,14 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--comma <COMMA>" help="Default sep." var=#true delimiter=","
+flag "--no-sep <NO-SEP>" help="No sep." var=#true
+flag "--space <SPACE>" help="Space sep." var=#true delimiter=" "
+flag "--enum <ENUM>" help="Enum." default="a,b" var=#true delimiter="," {
+    choices "a" "b"
+}
+flag "--map <KEY=VALUE>" help="Default mapsep." var=#true delimiter=";"
+flag "--map-sep <KEY=VALUE>" help="Custom mapsep." var=#true delimiter=","
+flag "--map-no-sep <KEY=VALUE>" help="No mapsep." var=#true

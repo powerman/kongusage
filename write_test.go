@@ -137,6 +137,80 @@ type (
 	testNamedSlice []string
 )
 
+type testFlagSlicesCLI struct {
+	Comma    []string          `                         help:"Default sep."`
+	NoSep    []string          `                         help:"No sep."                       sep:"none"`
+	Space    []string          `                         help:"Space sep."                    sep:" "`
+	Enum     []string          `default:"a,b" enum:"a,b" help:"Enum."`
+	Map      map[string]string `                         help:"Default mapsep."`
+	MapSep   map[string]string `                         help:"Custom mapsep."  mapsep:","`
+	MapNoSep map[string]int    `                         help:"No mapsep."      mapsep:"none"`
+}
+
+type (
+	testInheritedCLI struct {
+		Root  string           `       help:"Root flag."`
+		Group testInheritedGr  `cmd:"" help:"Has subcommands."`
+		Leaf  testInheritedLf  `cmd:"" help:"Leaf."`
+		Tool  testToolFlagsCmd `cmd:"" help:"Only a hidden subcommand."`
+	}
+	testInheritedGr struct {
+		Mid  string          `       help:"Mid flag."`
+		Leaf testInheritedLf `cmd:"" help:"Leaf."`
+	}
+	testInheritedLf struct {
+		Own string `help:"Leaf flag."`
+	}
+	testToolFlagsCmd struct {
+		Flag   bool        `                 help:"Flag."`
+		Secret testLeafCmd `cmd:"" hidden:"" help:"Secret."`
+	}
+)
+
+type testVersionCLI struct {
+	Version kong.VersionFlag `       help:"Show version." short:"V"`
+	Sub     testLeafCmd      `cmd:"" help:"Sub."`
+}
+
+type testVersionVarCLI struct {
+	Name string `help:"Name."`
+}
+
+type testFlagAliasesCLI struct {
+	Flag  string `help:"Aliases."         aliases:"f,flg"`
+	Short bool   `help:"Short and alias." aliases:"sh"                 short:"s"`
+	Neg   bool   `help:"Negatable."       aliases:"n"     negatable:""`
+}
+
+// testPlaceHolderMapper provides a placeholder.
+type testPlaceHolderMapper struct{ placeHolder string }
+
+func (testPlaceHolderMapper) Decode(*kong.DecodeContext, reflect.Value) error { return nil }
+func (m testPlaceHolderMapper) PlaceHolder(*kong.Flag) string                 { return m.placeHolder }
+
+type testValueNamesCLI struct {
+	Int      int               `default:"8080" help:"Default int."`
+	String   string            `default:"x"    help:"Default string."`
+	Map      map[string]string `default:"a=1"  help:"Default map."`
+	Angles   string            `               help:"Angles."         placeholder:"<FILE>"`
+	Twice    string            `               help:"Angles twice."   placeholder:"<<FILE>>"`
+	Tags     testNamedSlice    `default:"a"    help:"Slice."          placeholder:"<TAG>"`
+	Space    string            `               help:"Whitespace."     placeholder:"a b"`
+	NBSP     string            `               help:"No-break space." placeholder:"a\u00a0b"`
+	Empty    string            `               help:"Empty."          placeholder:"<>"`
+	Dots     testNamedSlice    `               help:"Dots."           placeholder:"TAG..."`
+	Ellipsis map[string]string `               help:"Ellipsis."       placeholder:"K=V…"`
+	Mapper   string            `               help:"Mapper."                                type:"ph"`
+	BadMap   string            `               help:"Bad mapper."                            type:"badph"`
+}
+
+type testPositionalNamesCLI struct {
+	Angles string   `arg:""             name:"<file>"   help:"Angles."`
+	Dots   string   `arg:""             name:"files..." help:"Dots."`
+	Space  string   `arg:""             name:"a b"      help:"Whitespace."`
+	Empty  []string `arg:"" optional:"" name:"<>"       help:"Empty."`
+}
+
 type testFlagEnvCLI struct {
 	Env     string           `env:"APP_A,APP_B,APP_C" help:"Env."`
 	NoEnv   string           `env:"-"                 help:"No env."`
@@ -203,6 +277,19 @@ func TestWriteSpec(tt *testing.T) {
 			kong.WithHyphenPrefixedParameters(true),
 		}},
 		{"flag_groups", &testGroupsCLI{}, kongusage.Config{}, nil},
+		{"flag_slices", &testFlagSlicesCLI{}, kongusage.Config{}, nil},
+		{"flags_inherited", &testInheritedCLI{}, kongusage.Config{}, nil},
+		{"flag_no_help", &testInheritedCLI{}, kongusage.Config{}, []kong.Option{kong.NoDefaultHelp()}},
+		{"flag_version", &testVersionCLI{}, kongusage.Config{}, []kong.Option{
+			kong.Vars{"version": "1.2.3"},
+		}},
+		{"flag_version_no_var", &testVersionCLI{}, kongusage.Config{}, nil},
+		{"version_no_flag", &testVersionVarCLI{}, kongusage.Config{}, []kong.Option{
+			kong.Vars{"version": "1.2.3"},
+		}},
+		{"flag_aliases", &testFlagAliasesCLI{}, kongusage.Config{}, nil},
+		{"value_names", &testValueNamesCLI{}, kongusage.Config{}, testValueNamesOptions},
+		{"positional_names", &testPositionalNamesCLI{}, kongusage.Config{}, nil},
 		{"positionals", &testPositionalsCLI{}, kongusage.Config{}, nil},
 		{"positionals_map", &testRequiredSliceCLI{}, kongusage.Config{}, nil},
 	}
@@ -212,6 +299,53 @@ func TestWriteSpec(tt *testing.T) {
 			t := check.T(tt).MustAll()
 
 			golden(t, tc.name, spec(t, tc.cli, tc.cfg, tc.options...))
+		})
+	}
+}
+
+var testValueNamesOptions = []kong.Option{
+	kong.NamedMapper("ph", testPlaceHolderMapper{"<HOST>"}),
+	kong.NamedMapper("badph", testPlaceHolderMapper{"HOST..."}),
+}
+
+func TestNotes(tt *testing.T) {
+	tt.Parallel()
+
+	tests := []struct {
+		name    string
+		cli     any
+		options []kong.Option
+		want    []string
+	}{
+		{"none", &testFlagsCLI{}, nil, nil},
+		{"value_names", &testValueNamesCLI{}, testValueNamesOptions, []string{
+			`app: flag --space: placeholder "a b" has whitespace, which usage refuses in a value name, so the spec uses "STRING"; change the placeholder tag of the flag`,
+			`app: flag --nbsp: placeholder "a\u00a0b" has whitespace, which usage refuses in a value name, so the spec uses "STRING"; change the placeholder tag of the flag`,
+			`app: flag --empty: placeholder "<>" is empty, so the spec uses "STRING"; change the placeholder tag of the flag`,
+			`app: flag --dots: placeholder "TAG..." has an ellipsis, which usage refuses in a value name, so the spec uses "TEST-NAMED-SLICE"; change the placeholder tag of the flag`,
+			`app: flag --ellipsis: placeholder "K=V…" has an ellipsis, which usage refuses in a value name, so the spec uses "KEY=VALUE"; change the placeholder tag of the flag`,
+			`app: flag --bad-map: placeholder "HOST..." has an ellipsis, which usage refuses in a value name, so the spec uses "STRING"; change PlaceHolder of its mapper`,
+		}},
+		{"positional_names", &testPositionalNamesCLI{}, nil, []string{
+			`app: positional files...: the name "files..." has an ellipsis, which usage takes as a mark of a variadic positional, so the spec uses "string"; change the name tag`,
+			`app: positional <>: the name "<>" is empty, so the spec uses "arg"; change the name tag`,
+		}},
+		{"in_command", &struct {
+			Sub struct {
+				Space string `placeholder:"a b"`
+			} `cmd:""`
+		}{}, nil, []string{
+			`app sub: flag --space: placeholder "a b" has whitespace, which usage refuses in a value name, so the spec uses "STRING"; change the placeholder tag of the flag`,
+		}},
+	}
+	for _, tc := range tests {
+		tt.Run(tc.name, func(tt *testing.T) {
+			tt.Parallel()
+			t := check.T(tt).MustAll()
+
+			parser, err := kong.New(tc.cli, append([]kong.Option{kong.Name("app")}, tc.options...)...)
+			t.Nil(err)
+			t.DeepEqual(kongusage.Notes(parser), tc.want)
 		})
 	}
 }

@@ -1,0 +1,14 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+disable_help_flag #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--flag <STRING>" help="Aliases." {
+    alias "-f" "--flg" hide=#true
+}
+flag "-s --short" help="Short and alias." bool_value=#true {
+    alias "--sh" hide=#true
+}
+flag "--neg" help="Negatable." negate="--no-neg" bool_value=#true {
+    alias "-n" hide=#true
+}
