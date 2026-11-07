@@ -113,7 +113,7 @@ Kong applies these before the model is read, so they need no mapping:
 
 ### Flags inherited by subcommands
 
-Kong accepts the flags of every ancestor after a subcommand (`app sub --verbose`)
+Kong accepts the flags of every ancestor after a subcommand (`my-kong-cli sub --verbose`)
 and checks their `required`, `xor` and `and` on every command of the path.
 
 Chosen: `global=#true` on every flag of every command which has subcommands,
@@ -287,7 +287,7 @@ Rejected:
 Chosen: hidden aliases.
 
 ```kdl
-flag "--flag" { alias "-f" "--flg" hide=#true; }
+flag "--flag" { alias "-f" "--flg" hide=#true }
 ```
 
 They are parsed but not completed.
@@ -348,8 +348,8 @@ Chosen: `complete` by the Go type:
 - enums complete their choices.
 
 ```kdl
-flag "--num <INT>" { complete type="none"; }
-flag "--dir <DIR>" { complete type="dir"; }
+flag "--num <INT>" { complete type="none" }
+flag "--dir <DIR>" { complete type="dir" }
 ```
 
 Strings keep the file fallback: it is the default of shells and of completion libraries.
@@ -429,7 +429,7 @@ Kong features usage 7.2.0 cannot express, and what is lost.
 
 ### Branching positional arguments
 
-`app rename <name> to <name>`: a positional `arg` struct followed by subcommands.
+`my-kong-cli rename <name> to <name>`: a positional `arg` struct followed by subcommands.
 usage binds the positional, then refuses the following command name.
 Emitted: the positional, without the subcommands,
 because completing them where Kong expects a value would be wrong.

@@ -41,7 +41,7 @@ type KDLProvider interface {
 // CheckSpec logs each part of the CLI which the spec fixes silently,
 // e.g. a placeholder which usage cannot take as a value name,
 // as it is likely a mistake which is worth correcting in the CLI.
-// It requires the `usage` CLI in PATH, of a version not older than `min_usage_version`;
+// It requires the `usage` CLI in PATH, of a version not older than [MinUsageVersion];
 // otherwise the test fails with the version to install.
 // When the environment variable KONGUSAGE_TEST_SKIP_USAGE is not empty,
 // it does not run usage, e.g. on platforms without it, and checks only usage features.

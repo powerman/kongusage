@@ -27,17 +27,17 @@
 // Typical features, as UsageKDL of the root would give them:
 //
 //	license MIT
-//	repository "https://github.com/example/app"
+//	repository "https://github.com/example/my-kong-cli"
 //	cmd "deploy" effect=destructive {
 //	    help_md "Deploys the **current** release."
-//	    example "app deploy --env=prod web1" header="Deploy to production"
+//	    example "my-kong-cli deploy --env=prod web1" header="Deploy to production"
 //	    exit_code 3 "The deployment was rolled back."
 //	    // The flag has placeholder:"ENV" and enum:"prod,dev".
 //	    flag "--env <ENV>" long_help="Environment to deploy to." {
 //	        note "Deploying to prod needs approval."
-//	        choices { choice prod help="Production."; }
+//	        choices { choice prod help="Production." }
 //	    }
-//	    arg "<host>" { complete run="app hosts"; }
+//	    arg "<host>" { complete run="my-kong-cli hosts" }
 //	}
 //
 // The tag holds properties and child nodes of the node of its field,
@@ -82,7 +82,7 @@
 //	}
 //
 //	func (RunCmd) UsageKDL() string {
-//		return `cmd "" effect=write { example "app run alpine"; }`
+//		return `cmd "" effect=write { example "my-kong-cli run alpine" }`
 //	}
 //
 //	type RmCmd struct {
@@ -92,7 +92,7 @@
 //	type ContainerID string
 //
 //	func (ContainerID) UsageKDL() string {
-//		return `arg "" { complete run="app ls"; }`
+//		return `arg "" { complete run="my-kong-cli ls" }`
 //	}
 //
 // The spec printed by [Flag] then has these nodes, besides other ones derived from Kong:
@@ -102,12 +102,12 @@
 //	    long_help "Overwrites existing files without asking."
 //	}
 //	cmd "run" help="Run a container." effect=write {
-//	    example "app run alpine"
+//	    example "my-kong-cli run alpine"
 //	    arg "<image>" help="Image to run."
 //	}
 //	cmd "rm" help="Remove a container." effect=destructive {
 //	    arg "<id>" help="Container." {
-//	        complete run="app ls"
+//	        complete run="my-kong-cli ls"
 //	        note "Stops it first."
 //	    }
 //	}
@@ -116,8 +116,10 @@
 // Which nodes, values and properties are accepted
 // and how exactly the tag changes the node is described in [docs/usage-features.md].
 //
-// A CLI must have a test which calls [CheckSpec], with the `usage` CLI installed,
-// because [Flag] panics on a mistake in usage features.
+// A CLI with usage features must have a test which calls [CheckSpec],
+// with the `usage` CLI installed, because [Flag] panics on a mistake in them.
+// The test is recommended for any CLI: it also runs `usage lint`
+// and logs parts of the CLI which the spec fixes silently.
 //
 // [usage]: https://usage.jdx.dev/
 // [docs/mapping.md]: https://github.com/powerman/kongusage/blob/main/docs/mapping.md

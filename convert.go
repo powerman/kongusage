@@ -12,6 +12,7 @@ import (
 )
 
 // MinUsageVersion is the oldest supported usage version.
+// The spec sets it as `min_usage_version`, and [CheckSpec] requires at least this version.
 const MinUsageVersion = "6.12.0"
 
 // converter converts the Kong model of a CLI to nodes of a usage spec by docs/mapping.md.
