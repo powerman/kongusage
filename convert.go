@@ -81,7 +81,7 @@ func (c *converter) convert() {
 		}
 		// default_subcommand_on_empty would select the default command
 		// on an empty command line as Kong does, but it breaks root completion
-		// (see TestDefaultSubcommandOnEmpty).
+		// (see TestDefaultSubcommandOnEmpty, https://github.com/jdx/usage/issues/1630).
 	}
 	nodes = append(nodes, kdl.NewNode("disable_help_flag", kdl.Bool(true)))
 	if hasSubcommands(app.Node) {

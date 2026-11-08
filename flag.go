@@ -45,6 +45,7 @@ func (*Flag) BeforeReset(app *kong.Kong, ctx *kong.Context, path *kong.Path) err
 	// Kong also calls the hook for a flag with a set environment variable,
 	// and the field may keep a value of a previous parse,
 	// so only a value from the command line is taken.
+	// See https://github.com/alecthomas/kong/issues/680.
 	value := ctx.Value(path)
 	if !value.IsValid() {
 		return nil

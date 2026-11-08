@@ -156,7 +156,8 @@ run = 'my-kong-cli'
 
 The file must be regenerated whenever the program changes.
 A missing or broken file makes the task fail
-and silently breaks completion of every task of the project.
+and silently breaks completion of every task of the project
+([jdx/mise#15462](https://github.com/jdx/mise/discussions/15462)).
 
 ### Path completion
 

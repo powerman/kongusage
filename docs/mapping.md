@@ -71,6 +71,8 @@ Kong applies these before the model is read, so they need no mapping:
   `env:"-"` (stays in the model without `DefaultEnvars`) → nothing.
   `kong.VersionFlag` → no `env`: Kong prints the version for any value of its variable,
   even `false`, which `DefaultEnvars` makes likely (e.g. `APP_VERSION`).
+  This is a regression in Kong v1.16.0:
+  [alecthomas/kong#680](https://github.com/alecthomas/kong/issues/680).
 - `and:"g"` → `requires` on every member naming every other member,
   by a child node when there are several (`requires "--b" "--c"`).
   `required:""` on any member makes Kong require every member,
@@ -219,7 +221,8 @@ Below the root: see [Kong only](#default-commands-below-the-root).
 Rejected: `default_subcommand_on_empty #true`.
 It would also select the default command on an empty command line, exactly as Kong does,
 but it breaks root completion in usage 6.12.0–7.3.0:
-`x <Tab>` offers the default command's arguments instead of commands.
+`x <Tab>` offers the default command's arguments instead of commands
+([jdx/usage#1630](https://github.com/jdx/usage/issues/1630)).
 It is to be emitted once the oldest supported usage version fixes this;
 a test detects the fix.
 

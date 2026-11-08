@@ -69,7 +69,8 @@ into the spec of the task.
 - A missing file or a spec usage-lib cannot parse in a TOML task (undocumented):
   the task fails to run, even with `raw_args = true`;
   `mise tasks info`, `mise generate task-docs` (for every task) and `mise tasks validate` fail;
-  completion of every task and of task names falls back to files, silently.
+  completion of every task and of task names falls back to files, silently
+  ([jdx/mise#15462](https://github.com/jdx/mise/discussions/15462)).
 
 ## Task directory
 

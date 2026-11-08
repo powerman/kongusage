@@ -11,7 +11,8 @@ import (
 )
 
 // TestDefaultSubcommandOnEmpty fails once default_subcommand_on_empty stops breaking
-// root completion: then docs/mapping.md "Default commands" is to be revised.
+// root completion (https://github.com/jdx/usage/issues/1630):
+// then docs/mapping.md "Default commands" is to be revised.
 func TestDefaultSubcommandOnEmpty(tt *testing.T) {
 	tt.Parallel()
 	t := check.T(tt)
