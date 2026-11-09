@@ -135,7 +135,8 @@ Rejected:
 
 - Plain flags of the parent:
   usage accepts them only before the subcommand,
-  and does not check their `required` and `requires` once a subcommand is selected (a bug).
+  and does not check their `required`, `requires` and `conflicts` once a subcommand is selected
+  ([jdx/usage#1634](https://github.com/jdx/usage/issues/1634)).
 - A copy of the flags in every descendant: duplicates docs, loses "Global Flags".
 
 ### Slice and map flags
