@@ -397,10 +397,12 @@ usage by default binds an unknown flag-like word as a positional value.
 Chosen: nothing, so parsing by usage is more permissive than Kong.
 
 Rejected: `unknown_flags "error"` at the root
-and `unknown_flags="value"` on commands with a passthrough:
-an unknown flag earlier on the line then breaks completion,
-the root node has no effect through a mise mount,
-and `passthrough:"partial"` cannot be expressed exactly anyway.
+together with `unknown_flags="value"` on commands with a passthrough.
+With the root node, an unknown flag earlier on the line stops completion
+(usage completes only a line which parses, by design:
+[jdx/usage#1495](https://github.com/jdx/usage/pull/1495)),
+and the root node has no effect through a mise mount.
+Besides, `passthrough:"partial"` cannot be expressed exactly anyway.
 
 ### Hidden positional arguments
 
