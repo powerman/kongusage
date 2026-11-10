@@ -67,6 +67,7 @@ The name of a positional is used the same way (`arg "[url]"` completes nothing).
 - Since 7.2.0, usage completes `-h`, `--help`, `-V` and `--version`
   unless declared flags use them.
 - Terminal help of a command with subcommands lists a `help` subcommand
-  which the parser refuses.
+  which the parser refuses
+  ([jdx/usage#1636](https://github.com/jdx/usage/issues/1636)).
   `disable_help` does not remove it, contrary to the docs;
   `disable_help_subcommand` does, on one command only.

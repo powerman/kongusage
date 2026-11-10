@@ -234,7 +234,8 @@ Kong adds `-h, --help` to the root unless `kong.NoDefaultHelp()`
 Kong has no `help` subcommand.
 usage has built-in `-h`, `--help` and `-?` on every command,
 and lists a `help` subcommand in terminal help of a command with subcommands,
-which its parser refuses.
+which its parser refuses
+([jdx/usage#1636](https://github.com/jdx/usage/issues/1636)).
 
 Chosen: the built-ins are disabled, and Kong's help flag is declared as a global flag.
 
