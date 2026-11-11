@@ -313,7 +313,8 @@ func choiceGroupRequired(cmd *kong.Node, flags []*kong.Flag) bool {
 }
 
 // andGroupRequired reports whether Kong requires the flag f because of its and-groups.
-// Kong sets required of a member by its last group only (checkMissingFlags).
+// Kong sets required of a member by its last group only (checkMissingFlags),
+// see https://github.com/alecthomas/kong/issues/683.
 func andGroupRequired(cmd *kong.Node, f *kong.Flag) bool {
 	if len(f.And) == 0 {
 		return false

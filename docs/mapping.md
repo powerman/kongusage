@@ -79,6 +79,7 @@ Kong applies these before the model is read, so they need no mapping:
   so every member gets `required=#true`.
   A flag in several `and` groups is required by Kong only if the last group requires it
   (its README implies every group): the spec follows the model.
+  Reported as [alecthomas/kong#683](https://github.com/alecthomas/kong/issues/683).
 - `lastwins:"g"` → `overrides` on every member naming every other member.
 - `xor:"g"`, `lastwins:"g"` with `required:""`:
   see [Flag relationship groups](#flag-relationship-groups).

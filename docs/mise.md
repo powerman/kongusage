@@ -41,7 +41,8 @@ Undocumented behaviour is marked so: it may change in any release.
 - Without root positionals in the mounted spec the task keeps mise's hidden catch-all
   `[ARGS]…`, so an unknown first word is accepted silently instead of being an error.
   An included spec always keeps it, after its root positionals (undocumented),
-  so extra words after them are accepted silently too.
+  so extra words after them are accepted silently too
+  ([jdx/mise#15610](https://github.com/jdx/mise/discussions/15610)).
 
 ## Mount command
 
@@ -88,7 +89,8 @@ Measured with mise 2026.10.21 (usage-lib 7.1.3) in zsh and bash.
 - Files (fallback or `complete type="unknown"`) are completed by the shell itself.
 - Concrete candidates (`choices`, `type="file"`/`"dir"` matches, output of `complete run=`)
   are inserted badly: zsh adds no space after any of them, bash adds one even after `dir/`,
-  and bash breaks values containing `=` (`--c=alpha` becomes `--c=--c=alpha`).
+  and bash breaks values containing `=` (`--c=alpha` becomes `--c=--c=alpha`)
+  ([jdx/usage#1641](https://github.com/jdx/usage/issues/1641)).
 - `choices` match the typed prefix case-sensitively (`ignore_case` does not change this),
   cannot complete values starting with `-`,
   and cost about 4 µs per value of the whole spec on every Tab.
