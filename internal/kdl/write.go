@@ -15,7 +15,8 @@ const versionV2 = 2
 
 // Write writes the nodes to w as a KDL v2 document.
 //
-// Strings are sanitized to be valid in KDL v2 (see sanitize).
+// The generator escapes strings, so any string is written as valid KDL v2;
+// only comments are sanitized (see sanitize).
 // It panics on an invalid name or Value.
 func Write(w io.Writer, nodes []*Node) error {
 	doc := document.New()
@@ -46,7 +47,6 @@ func (n *Node) document() *document.Node {
 		node.AddArgumentValue(v.document())
 	}
 	for _, p := range n.Props {
-		// AddPropertyValue allocates Properties, unlike Properties.Add.
 		node.AddPropertyValue(checkName(p.Name), p.Value.document(), "")
 	}
 	for _, child := range n.Children {
@@ -55,7 +55,7 @@ func (n *Node) document() *document.Node {
 	return node
 }
 
-// checkName panics on a name which gokdl2 v0.6.1 cannot write as valid KDL v2.
+// checkName panics on a name which gokdl2 v0.7.0 cannot write as valid KDL v2.
 // Remove the checks once gokdl2 is fixed.
 func checkName(name string) string {
 	// The generator escapes a quoted name like a string value, wrong for KDL v2 (see sanitize),
@@ -90,22 +90,16 @@ func isIdentifierV2(s string) bool {
 
 func (v Value) document() *document.Value {
 	switch x := v.v.(type) {
-	case string:
-		// With no flags the generator writes a single-line quoted string:
-		// its multi-line strings have closing quotes on the last line of the text,
-		// which is invalid KDL v2.
-		return &document.Value{Value: sanitize(x)}
-	case int64, bool:
+	case string, int64, bool:
 		return &document.Value{Value: x}
 	default:
 		panic(fmt.Sprintf("invalid KDL value %#v", v.v))
 	}
 }
 
-// sanitize makes s valid in a KDL v2 quoted string and in a comment.
-// The generator escapes control characters as `\uXX` and invalid UTF-8 as `\ufffd`,
-// which is invalid KDL v2 (it needs `\u{XX}`),
-// and does not escape other characters which KDL v2 does not allow in a document.
+// sanitize makes s valid in a KDL v2 comment line,
+// which the generator writes as is;
+// it is also used by checkName.
 //
 // Newlines of KDL v2 become `\n`;
 // other control characters but `\t`, BOM and bidi controls are removed;

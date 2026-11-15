@@ -28,7 +28,6 @@ var (
 // a property given twice keeps the last value, as the KDL spec requires.
 func Parse(s string) ([]*Node, error) {
 	// The default version of gokdl2 falls back to KDL v1 silently.
-	// gokdl2 v0.6.1 refuses a literal U+FFFD as invalid UTF-8, unlike usage: `\u{FFFD}` works.
 	doc, err := gokdl.ParseWithOptions(strings.NewReader(s), gokdl.ParseOptions{Version: gokdl.ParseVersionV2})
 	if err != nil {
 		return nil, err

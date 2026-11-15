@@ -36,6 +36,11 @@ b
 	nodes, err = kdl.Parse("")
 	t.Nil(err)
 	t.Len(nodes, 0)
+
+	nodes, err = kdl.Parse("a \"\uFFFD\"")
+	t.Nil(err)
+	t.Len(nodes, 1)
+	t.DeepEqual(nodes[0].Values[0].Interface(), any("\uFFFD"))
 }
 
 func TestParse_error(tt *testing.T) {
@@ -48,7 +53,7 @@ func TestParse_error(tt *testing.T) {
 	}{
 		{`a "x`, `.`},
 		{`a true`, `.`}, // KDL v1.
-		{"a \"�\"", `invalid UTF8`},
+		{"a \"\xff\"", `invalid UTF8`},
 		{`(t)a`, `^node a: type annotations are not supported: \(t\)$`},
 		{`a (t)1`, `^node a: type annotations are not supported: \(t\)$`},
 		{`a p=(t)1`, `^node a: property p: type annotations are not supported: \(t\)$`},

@@ -14,35 +14,45 @@ import (
 	"github.com/powerman/kongusage/internal/usagetest"
 )
 
-// Strings which need escaping or sanitizing, with the strings they become.
+// Strings which need escaping, with the comment and the value they become.
+// The kdl is the text the generator writes for the value.
 var testStrings = []struct {
-	name string
-	in   string
-	want string
-	kdl  string
+	name    string
+	in      string
+	comment string
+	value   string
+	kdl     string
 }{
-	{"empty", "", "", `""`},
-	{"plain", "text", "text", `"text"`},
-	{"keyword", "true", "true", `"true"`},
-	{"quote", `a"b`, `a"b`, `"a\"b"`},
-	{"backslash", `a\b`, `a\b`, `"a\\b"`},
-	{"slash", "a/b", "a/b", `"a/b"`},
-	{"hash", "#a r#\"b\"#", "#a r#\"b\"#", `"#a r#\"b\"#"`},
-	{"braces", "{a; b}", "{a; b}", `"{a; b}"`},
-	{"newline", "a\nb", "a\nb", `"a\nb"`},
-	{"tab", "a\tb", "a\tb", `"a\tb"`},
-	{"non-ASCII", "é ∞ 😀", "é ∞ 😀", `"é ∞ 😀"`},
-	{"CRLF", "a\r\nb", "a\nb", `"a\nb"`},
-	{"CR", "a\rb", "a\nb", `"a\nb"`},
-	{"VT FF", "a\vb\fc", "a\nb\nc", `"a\nb\nc"`},
-	{"NEL", "a\u0085b", "a\nb", `"a\nb"`},
-	{"LS PS", "a\u2028b\u2029c", "a\nb\nc", `"a\nb\nc"`},
-	{"C0", "a\x00b\x1bc\bd", "abcd", `"abcd"`},
-	{"DEL", "a\x7fb", "ab", `"ab"`},
-	{"C1", "a\u0080b\u009bc", "abc", `"abc"`},
-	{"BOM", "\uFEFFa\uFEFF", "a", `"a"`},
-	{"bidi", "a\u200Eb\u200F\u202Ac\u202E\u2066d\u2069", "abcd", `"abcd"`},
-	{"invalid UTF-8", "a\xffb\xe2\x82", "a\uFFFDb\uFFFD", "\"a\uFFFDb\uFFFD\""},
+	{"empty", "", "", "", `""`},
+	{"plain", "text", "text", "text", `"text"`},
+	{"keyword", "true", "true", "true", `"true"`},
+	{"quote", `a"b`, `a"b`, `a"b`, `"a\"b"`},
+	{"backslash", `a\b`, `a\b`, `a\b`, `"a\\b"`},
+	{"slash", "a/b", "a/b", "a/b", `"a/b"`},
+	{"hash", "#a r#\"b\"#", "#a r#\"b\"#", "#a r#\"b\"#", `"#a r#\"b\"#"`},
+	{"braces", "{a; b}", "{a; b}", "{a; b}", `"{a; b}"`},
+	{"newline", "a\nb", "a\nb", "a\nb", `"a\nb"`},
+	{"tab", "a\tb", "a\tb", "a\tb", `"a\tb"`},
+	{"non-ASCII", "é ∞ 😀", "é ∞ 😀", "é ∞ 😀", `"é ∞ 😀"`},
+	{"CRLF", "a\r\nb", "a\nb", "a\r\nb", `"a\r\nb"`},
+	{"CR", "a\rb", "a\nb", "a\rb", `"a\rb"`},
+	{"VT FF", "a\vb\fc", "a\nb\nc", "a\vb\fc", `"a\u{b}b\fc"`},
+	{"NEL", "a\u0085b", "a\nb", "a\u0085b", `"a\u{85}b"`},
+	{"LS PS", "a\u2028b\u2029c", "a\nb\nc", "a\u2028b\u2029c", `"a\u{2028}b\u{2029}c"`},
+	{"C0", "a\x00b\x1bc\bd", "abcd", "a\x00b\x1bc\bd", `"a\u{0}b\u{1b}c\bd"`},
+	{"DEL", "a\x7fb", "ab", "a\x7fb", `"a\u{7f}b"`},
+	{"C1", "a\u0080b\u009bc", "abc", "a\u0080b\u009bc", "\"a\u0080b\u009bc\""},
+	{"BOM", "\uFEFFa\uFEFF", "a", "\uFEFFa\uFEFF", `"\u{feff}a\u{feff}"`},
+	{
+		"bidi", "a\u200Eb\u200F\u202Ac\u202E\u2066d\u2069", "abcd",
+		"a\u200Eb\u200F\u202Ac\u202E\u2066d\u2069",
+		`"a\u{200e}b\u{200f}\u{202a}c\u{202e}\u{2066}d\u{2069}"`,
+	},
+	{"U+FFFD", "a\uFFFDb", "a\uFFFDb", "a\uFFFDb", "\"a\uFFFDb\""},
+	{
+		"invalid UTF-8", "a\xffb\xe2\x82", "a\uFFFDb\uFFFD", "a\uFFFDb\uFFFD\uFFFD",
+		`"a\u{fffd}b\u{fffd}\u{fffd}"`,
+	},
 }
 
 func write(t *check.C, nodes ...*kdl.Node) string {
@@ -108,23 +118,19 @@ func TestWrite_strings(tt *testing.T) {
 			n.Comment = []string{tc.in}
 			out := write(t, n)
 			var want strings.Builder
-			for line := range strings.SplitSeq(tc.want, "\n") {
+			for line := range strings.SplitSeq(tc.comment, "\n") {
 				want.WriteString(strings.TrimRight("// "+line, " ") + "\n")
 			}
 			want.WriteString("n " + tc.kdl + " p=" + tc.kdl + "\n")
 			t.Equal(out, want.String())
 
-			// The parser of gokdl2 v0.6.1 takes U+FFFD for invalid UTF-8.
-			if strings.ContainsRune(tc.want, '\uFFFD') {
-				return
-			}
 			doc, err := gokdl.ParseWithOptions(strings.NewReader(out),
 				gokdl.ParseOptions{Version: gokdl.ParseVersionV2})
 			t.Nil(err)
 			t.Len(doc.Nodes, 1)
-			t.Equal(doc.Nodes[0].Arguments[0].ResolvedValueV2(), tc.want)
+			t.Equal(doc.Nodes[0].Arguments[0].ResolvedValueV2(), tc.value)
 			p, _ := doc.Nodes[0].Properties.Get("p")
-			t.Equal(p.ResolvedValueV2(), tc.want)
+			t.Equal(p.ResolvedValueV2(), tc.value)
 		})
 	}
 }
@@ -230,7 +236,7 @@ func TestWrite_usage(tt *testing.T) {
 		t.Nil(json.Unmarshal([]byte(out), &got))
 		t.Len(got.Cmd.Flags, len(testStrings))
 		for i, tc := range testStrings {
-			t.Equal(got.Cmd.Flags[i].HelpLong, "x"+tc.want+"x", version, tc.name)
+			t.Equal(got.Cmd.Flags[i].HelpLong, "x"+tc.value+"x", version, tc.name)
 		}
 	}
 }
