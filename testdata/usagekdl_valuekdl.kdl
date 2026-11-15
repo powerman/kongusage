@@ -1,0 +1,28 @@
+min_usage_version "6.12.0"
+name "app"
+bin "app"
+about "App."
+disable_help_flag #true
+disable_help_subcommand #true
+flag "-h --help" help="Show context-sensitive help." action="help" global=#true
+flag "--level <TEST-HOOK-LEVEL>" help="UsageKDL of the type." global=#true {
+    complete run="app levels"
+    note "Hook."
+}
+flag "--host <STRING>" help="Only hooks." global=#true {
+    complete run="app complete hosts"
+}
+flag "--user <STRING>" help="The tag replaces." global=#true {
+    complete type="username"
+}
+flag "--force" help="No usage features." bool_value=#true global=#true
+cmd "run" help="Run." display_order=0 disable_help_flag=#true {
+    flag "--job <STRING>" help="Described by the command." {
+        complete run="app complete jobs"
+        long_help "Described."
+    }
+    arg "<id>" help="Positional." {
+        complete run="app complete ids"
+        note "Positional of run."
+    }
+}

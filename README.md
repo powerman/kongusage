@@ -79,7 +79,7 @@ The [package doc](https://pkg.go.dev/github.com/powerman/kongusage#hdr-Usage_fea
 explains the sources and where to put which feature;
 [docs/usage-features.md](docs/usage-features.md) lists the accepted nodes
 and how they are merged.
-When the tag changes the node given by `UsageKDL()`, mind that:
+When a hook or the tag changes the node given by `UsageKDL()`, mind that:
 
 - `long_help` and `help_md` are different nodes, so one does not replace the other;
   the same holds for `before_help` and `before_help_md`, `after_help` and `after_help_md`.
@@ -87,6 +87,11 @@ When the tag changes the node given by `UsageKDL()`, mind that:
 - One `example` of the tag replaces all examples given by `UsageKDL()`,
   and so do `note`, `warning`, `exit_code` and `output`.
 - `complete` is replaced as a whole, e.g. `complete type=file` drops `run` of the old one.
+
+Features which would repeat on many commands, flags or positional arguments
+can be given by the hooks `Config.NodeKDL` and `Config.ValueKDL`:
+a hook returns a string in the same format as the tag for each of them,
+and it is merged the same way, before the tag of the field.
 
 ### Testing
 

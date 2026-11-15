@@ -12,6 +12,9 @@
 // in KDL v2, as nodes of the usage spec:
 //
 //   - by [KDLProvider] of the named root, command, flag or positional argument type;
+//   - by the hooks [Config.NodeKDL] and [Config.ValueKDL]:
+//     functions which return a string in the same format as the tag,
+//     for each command, flag or positional argument;
 //   - by the tag `usage-kdl` of the field of a command, a flag or a positional argument.
 //
 // UsageKDL of the root returns top-level nodes of the spec.
@@ -52,12 +55,49 @@
 //   - `usage-kdl:"{ flag \"--force\" effect=destructive }"` on a command
 //     changes the node of its flag, keeping the rest of the node.
 //
+// A hook is a function which returns a string in the same format as the tag, or "",
+// for the entity it is called for.
+// Hooks of [Config.NodeKDL] are called for the root and for every command,
+// hooks of [Config.ValueKDL] for every flag and positional argument.
+// The string is merged the same way as the tag, after UsageKDL and before the tag of the field.
+// Hooks are applied in the order they are listed,
+// so a later hook may change what an earlier one (e.g. of a library) gave.
+// For example, hooks which read struct tags of their own:
+//
+//	func (CLI) UsageConfig() kongusage.Config {
+//		return kongusage.Config{
+//			NodeKDL:  []kongusage.NodeKDLFunc{effect},
+//			ValueKDL: []kongusage.ValueKDLFunc{predictor},
+//		}
+//	}
+//
+//	// effect gives a command the property `effect` by its tag `effect:"read"`,
+//	// which is shorter than `usage-kdl:"effect=read"`.
+//	func effect(n *kong.Node) string {
+//		if e := n.Tag.Get("effect"); e != "" {
+//			return "effect=" + e
+//		}
+//		return ""
+//	}
+//
+//	// predictor completes a flag or a positional argument with the tag `predictor:"hosts"`
+//	// by the command `my-kong-cli complete hosts`.
+//	func predictor(_ *kong.Node, v *kong.Value) string {
+//		name := v.Tag.Get("predictor")
+//		if name == "" {
+//			return ""
+//		}
+//		return fmt.Sprintf(`{ complete run="my-kong-cli complete %s" }`, name)
+//	}
+//
 // Where to put features:
 //
 //   - UsageKDL of the root: features of the whole CLI, long texts,
 //     and features of commands without a named type.
 //   - UsageKDL of a reusable type: features which hold wherever the type is used,
 //     e.g. `effect` of a command or `complete` of a value.
+//   - A hook: features derived from the Kong model for every command, flag or positional argument,
+//     e.g. by a library, instead of repeating them in UsageKDL or the tag of each of them.
 //   - The tag: short features of one field, and changes of the node of its type for it.
 //
 // For example:

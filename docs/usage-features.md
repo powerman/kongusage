@@ -14,6 +14,9 @@ The author supplies features in KDL v2, as a subset of nodes of the usage spec:
 
 - by the optional method `UsageKDL()` (`kongusage.KDLProvider`)
   of the named root, command, flag and positional argument types;
+- by the optional hooks `Config.NodeKDL` and `Config.ValueKDL`:
+  functions which return a string in the same format as the tag, for each command,
+  flag or positional argument;
 - by the optional struct tag `usage-kdl` of the field of a command,
   a flag or a positional argument.
 
@@ -39,17 +42,25 @@ accepting such names later would be a compatible change.
 The tag holds properties and child nodes of the node of its field, without its name and value,
 e.g. `usage-kdl:"effect=destructive { note \"See --backup.\" }"`.
 
+A hook is a function which returns a string in the same format as the tag,
+or an empty string, for the entity it is called for.
+Hooks of `Config.NodeKDL` are called for the root and for every command,
+hooks of `Config.ValueKDL` for every flag and positional argument.
+The root has no field, so only a hook can give it features in this format, e.g. `{ license MIT }`.
+
 ## Merge
 
 Usage features are collected from the root down:
 
-1. `UsageKDL()` of the root gives the first nodes.
+1. `UsageKDL()` of the root gives the first nodes;
+   then hooks change them.
 2. For every field of a command, a flag or a positional argument, top-down:
    `UsageKDL()` of the type of the field gives its node,
    unless an ancestor has already described the node;
+   then hooks change the node, in the order they are listed in `Config`;
    then the tag of the field changes the node.
 
-Only the tag is merged.
+Only hooks and the tag are merged.
 Where there was no clear better way, the rules follow how usage merges an included spec
 into a command, though they differ from it (e.g. usage replaces all flags at once):
 
@@ -72,7 +83,7 @@ into a command, though they differ from it (e.g. usage replaces all flags at onc
   as is a type annotation.
 - A node of `UsageKDL()` of a type which does not apply to the field
   (e.g. a `choice` for a value outside the `enum` of the field)
-  is an error unless the tag of the field removes it.
+  is an error unless a hook or the tag of the field removes it.
 - A node, value or property added after the oldest supported usage version
   is not accepted until that version reaches it ([Design](design.md#usage-version)).
 - Other validation is left to `usage lint`, which `kongusage.CheckSpec` runs.

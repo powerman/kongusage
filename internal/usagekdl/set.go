@@ -67,7 +67,7 @@ func ParseValue(where []string, text string) *Set {
 	}
 }
 
-// ParseTag parses usage features of an entity at the place AtCmd or AtArg
+// ParseTag parses usage features of an entity at the place
 // given in text as properties and child nodes of its node, without the node name.
 // The source where names the entity and the source of text, for messages.
 func ParseTag(where []string, text string, at Place) *Set {

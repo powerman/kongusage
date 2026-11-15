@@ -122,7 +122,8 @@ func (c *converter) members(n *kong.Node, fs *usagekdl.Set) []*kdl.Node {
 			// only the positional is emitted, its flags and subcommands are lost.
 			// Kong takes the first branch whose positional parses,
 			// which another positional cannot express, so later branches are lost too.
-			// usage features of the type of the branch are lost with it.
+			// usage features of the type of the branch are lost with it,
+			// and Config.ValueKDL gets the branch as cmd of its positional.
 			if !branched {
 				nodes = append(nodes, c.positional(child, child.Argument, fs))
 				branched = true
@@ -200,7 +201,7 @@ func (c *converter) flag(cmd *kong.Node, f *kong.Flag, cmdUsageKDL *usagekdl.Set
 	isVersion := isVersionFlag(f)
 
 	node := kdl.NewNode("flag", kdl.String(c.flagName(cmd, f)))
-	fs := c.valueUsageKDL([]string{cmd.FullPath(), "flag --" + f.Name}, cmdUsageKDL.Entity(node), f.Value)
+	fs := c.valueUsageKDL(cmd, []string{cmd.FullPath(), "flag --" + f.Name}, cmdUsageKDL.Entity(node), f.Value)
 
 	c.setHelp(node, f.Value)
 	// Kong requires a member of an xor or lastwins group only together with other members,
@@ -270,6 +271,7 @@ func (c *converter) positional(cmd *kong.Node, p *kong.Positional, cmdUsageKDL *
 	}
 	node := kdl.NewNode("arg", kdl.String(name))
 	fs := c.valueUsageKDL(
+		cmd,
 		[]string{cmd.FullPath(), "positional " + p.Name},
 		cmdUsageKDL.Entity(node),
 		p,
