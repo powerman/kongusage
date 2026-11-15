@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-11-15
+
+### 🚀 Added
+
+- Add NodeKDL and ValueKDL hooks by @powerman in [2444d8d]
+
+### 📚 Documentation
+
+- Clarify `min_usage_version` warning and strict node names by @powerman in [b8cacbb]
+- Refine usage version notes for `--` and `-V` by @powerman in [31b93f9]
+- Link upstream issues for known bugs by @powerman in [e8f07d5]
+- Clarify `unknown_flags` rejection rationale by @powerman in [20fd993]
+- Link upstream issue for subcommand flag checks by @powerman in [6aec21d]
+- Link upstream issue for refused help subcommand by @powerman in [88fefc6]
+- Link upstream reports for and-group and mise issues by @powerman in [e31c2b8]
+
+[0.3.0]: https://github.com/powerman/kongusage/compare/v0.2.0..v0.3.0
+[b8cacbb]: https://github.com/powerman/kongusage/commit/b8cacbbd36b0ef0a4626203dc9cd7105dcca4f2e
+[31b93f9]: https://github.com/powerman/kongusage/commit/31b93f9bf854c3a215ca122cf595b641cb518532
+[e8f07d5]: https://github.com/powerman/kongusage/commit/e8f07d52ae531afa1916fd0a111810b8eb8356ee
+[20fd993]: https://github.com/powerman/kongusage/commit/20fd99350d8b5e15925f902db761ce14b8e12331
+[6aec21d]: https://github.com/powerman/kongusage/commit/6aec21d00e4b48a9547340ceaf30890f983aa19d
+[88fefc6]: https://github.com/powerman/kongusage/commit/88fefc663c9001fe6184a4b2619b303d3e207e2f
+[e31c2b8]: https://github.com/powerman/kongusage/commit/e31c2b85c98931f4d5cddb20b2983f16a98da362
+[2444d8d]: https://github.com/powerman/kongusage/commit/2444d8da8e7679cc932f3a0be7d30d94f0ac39fa
+
 ## [0.2.0] - 2026-11-07
 
 ### 🔔 Changed
