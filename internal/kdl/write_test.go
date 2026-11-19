@@ -158,6 +158,17 @@ func TestWrite_names(tt *testing.T) {
 		{"--flag", `--flag`},
 		{"true1", `true1`},
 		{"-nan", `-nan`},
+		{"true", `"true"`},
+		{"false", `"false"`},
+		{"null", `"null"`},
+		{"inf", `"inf"`},
+		{"-inf", `"-inf"`},
+		{"nan", `"nan"`},
+		{"-1x", `"-1x"`},
+		{"+1", `"+1"`},
+		{".5", `".5"`},
+		{"-.5", `"-.5"`},
+		{"+.5", `"+.5"`},
 		{"#a", `"#a"`},
 		{"a=b", `"a=b"`},
 		{"a/b", `"a/b"`},
@@ -165,6 +176,12 @@ func TestWrite_names(tt *testing.T) {
 		{`a\b`, `"a\\b"`},
 		{"a\nb", `"a\nb"`},
 		{"a\tb", `"a\tb"`},
+		{"a\rb", `"a\rb"`},
+		{"a\x1bb", `"a\u{1b}b"`},
+		{"a\u0085b", `"a\u{85}b"`},
+		{"a\u2028b", `"a\u{2028}b"`},
+		{"a\uFEFFb", `"a\u{feff}b"`},
+		{"a\u200Eb", `"a\u{200e}b"`},
 	}
 	for _, tc := range tests {
 		n := kdl.NewNode(tc.name).SetProp(tc.name, kdl.Int(1))
@@ -186,18 +203,6 @@ func TestWrite_panic(tt *testing.T) {
 	tt.Parallel()
 	t := check.T(tt)
 
-	names := []string{
-		"true", "false", "null", "inf", "-inf", "nan",
-		"-1x", "+1", ".5", "-.5", "+.5",
-		"a\x1bb", "a\rb", "a\u0085b", "a\u2028b", "a\uFEFFb", "a\u200Eb", "a\xffb",
-	}
-	for _, name := range names {
-		t.PanicMatch(func() { write(t, kdl.NewNode(name)) }, `invalid KDL name`, name)
-		t.PanicMatch(func() { write(t, kdl.NewNode("n").SetProp(name, kdl.Int(1))) },
-			`invalid KDL name`, name)
-		t.PanicMatch(func() { write(t, kdl.NewNode("n").AddChild(kdl.NewNode(name))) },
-			`invalid KDL name`, name)
-	}
 	t.PanicMatch(func() { write(t, kdl.NewNode("n", kdl.Value{})) }, `invalid KDL value`)
 	t.PanicMatch(func() { write(t, kdl.NewNode("n").SetProp("p", kdl.Value{})) },
 		`invalid KDL value`)

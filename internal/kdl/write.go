@@ -17,7 +17,7 @@ const versionV2 = 2
 //
 // The generator escapes strings, so any string is written as valid KDL v2;
 // only comments are sanitized (see sanitize).
-// It panics on an invalid name or Value.
+// It panics on an invalid Value.
 func Write(w io.Writer, nodes []*Node) error {
 	doc := document.New()
 	for _, n := range nodes {
@@ -31,7 +31,7 @@ func Write(w io.Writer, nodes []*Node) error {
 
 func (n *Node) document() *document.Node {
 	node := document.NewNode()
-	node.SetName(checkName(n.Name))
+	node.SetName(n.Name)
 	if len(n.Comment) > 0 {
 		var lines []string
 		for _, line := range n.Comment {
@@ -47,45 +47,12 @@ func (n *Node) document() *document.Node {
 		node.AddArgumentValue(v.document())
 	}
 	for _, p := range n.Props {
-		node.AddPropertyValue(checkName(p.Name), p.Value.document(), "")
+		node.AddPropertyValue(p.Name, p.Value.document(), "")
 	}
 	for _, child := range n.Children {
 		node.AddNode(child.document())
 	}
 	return node
-}
-
-// checkName panics on a name which gokdl2 v0.7.0 cannot write as valid KDL v2.
-// Remove the checks once gokdl2 is fixed.
-func checkName(name string) string {
-	// The generator escapes a quoted name like a string value, wrong for KDL v2 (see sanitize),
-	// and sanitizing a name would change it silently.
-	if sanitize(name) != name {
-		panic(fmt.Sprintf("invalid KDL name %q: gokdl2 cannot escape it", name))
-	}
-	// The generator writes a name bare when its characters are valid in an identifier string,
-	// and does not check the rest of the grammar of KDL v2.
-	// Property names are written bare by the same check.
-	bare := !strings.HasPrefix((&document.Value{Value: name}).NodeNameStringV2(), `"`)
-	if bare && !isIdentifierV2(name) {
-		panic(fmt.Sprintf("invalid KDL name %q: gokdl2 writes it bare", name))
-	}
-	return name
-}
-
-// isIdentifierV2 reports whether s, made of characters valid in an identifier string,
-// is an identifier string by the grammar of KDL v2:
-// not a keyword and not looking like a number.
-func isIdentifierV2(s string) bool {
-	switch s {
-	case "true", "false", "null", "inf", "-inf", "nan":
-		return false
-	}
-	if strings.HasPrefix(s, "+") || strings.HasPrefix(s, "-") {
-		s = s[1:]
-	}
-	s = strings.TrimPrefix(s, ".")
-	return s == "" || s[0] < '0' || '9' < s[0]
 }
 
 func (v Value) document() *document.Value {
@@ -98,8 +65,7 @@ func (v Value) document() *document.Value {
 }
 
 // sanitize makes s valid in a KDL v2 comment line,
-// which the generator writes as is;
-// it is also used by checkName.
+// which the generator writes as is.
 //
 // Newlines of KDL v2 become `\n`;
 // other control characters but `\t`, BOM and bidi controls are removed;

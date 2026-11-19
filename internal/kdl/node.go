@@ -1,4 +1,4 @@
-// Package kdl builds a tree of KDL nodes and writes it as a KDL v2 document.
+// Package kdl builds a tree of KDL nodes, writes it as a KDL v2 document and parses one.
 package kdl
 
 import (
@@ -81,7 +81,6 @@ type Prop struct {
 }
 
 // Node is a KDL node.
-// Write panics on a few names of nodes and properties which it cannot write.
 type Node struct {
 	Name string
 	// Comment holds lines of the comment written before the node, without `//`.
