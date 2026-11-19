@@ -2,6 +2,7 @@ package kongusage_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/alecthomas/kong"
@@ -31,9 +32,15 @@ type testRequiredCLI struct {
 }
 
 type testEnvCLI struct {
-	Name string `help:"Name."`
-
 	UsageSpec kongusage.Flag
+
+	Name string `help:"Name."`
+}
+
+type testUsageSpecCLI struct {
+	kongusage.UsageSpec
+
+	Name string `help:"Name."`
 }
 
 type testConfigCLI struct {
@@ -201,6 +208,30 @@ func TestFlag_BeforeReset_env(tt *testing.T) {
 					t.Match(err, tc.wantErr)
 				}
 			}
+		})
+	}
+}
+
+// TestUsageSpec checks the embedded UsageSpec works as the field of the type Flag named UsageSpec.
+func TestUsageSpec(tt *testing.T) {
+	tt.Parallel()
+
+	tests := [][]string{
+		{"--help"},
+		{"--usage-spec"},
+		{"--usage-spec=false"},
+		{"--usage-spec=x"},
+	}
+	for _, args := range tests {
+		tt.Run("", func(tt *testing.T) {
+			tt.Parallel()
+			t := check.T(tt).MustAll()
+
+			out, exit, err := parse(t, &testUsageSpecCLI{}, args...)
+			wantOut, wantExit, wantErr := parse(t, &testEnvCLI{}, args...)
+			t.Equal(exit, wantExit)
+			t.Equal(out, wantOut)
+			t.Equal(fmt.Sprint(err), fmt.Sprint(wantErr))
 		})
 	}
 }

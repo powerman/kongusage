@@ -1,6 +1,6 @@
 // Package kongusage adds [usage] spec support for Kong CLI.
 //
-// A CLI declares a [Flag], which prints the spec of the CLI
+// A CLI declares a [Flag] (usually by embedding [UsageSpec]), which prints the spec of the CLI
 // for a shell completion script, a mise task, docs or a compatibility check.
 // [WriteSpec] can be used to generate the spec without using a [Flag].
 //

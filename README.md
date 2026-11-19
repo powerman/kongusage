@@ -27,13 +27,20 @@ Add a flag to the Kong CLI struct:
 
 ```go
 type CLI struct {
+    kongusage.UsageSpec
     // ...
-    UsageSpec kongusage.Flag
 }
 ```
 
-With `kong.DefaultEnvars` add the tag `env:"-"` to the flag:
+With `kong.DefaultEnvars` declare the flag as a field with the tag `env:"-"` instead:
 only the command line sets it, so help should not show a variable for it.
+
+```go
+type CLI struct {
+    UsageSpec kongusage.Flag `env:"-"`
+    // ...
+}
+```
 
 Then the program prints its [usage spec](https://usage.jdx.dev/) in KDL by `--usage-spec`.
 
@@ -47,10 +54,10 @@ and by the tag `usage-kdl` of their fields:
 
 ```go
 type CLI struct {
-    UsageSpec kongusage.Flag `env:"-"`
-    Force     bool           `help:"Overwrite files." usage-kdl:"effect=destructive"`
-    Deploy    DeployCmd      `cmd:"" help:"Deploy the release."`
-    Hosts     HostsCmd       `cmd:"" help:"Print known hosts, one per line." hidden:""`
+    kongusage.UsageSpec
+    Force  bool      `help:"Overwrite files." usage-kdl:"effect=destructive"`
+    Deploy DeployCmd `cmd:"" help:"Deploy the release."`
+    Hosts  HostsCmd  `cmd:"" help:"Print known hosts, one per line." hidden:""`
 }
 
 func (CLI) UsageKDL() string {
