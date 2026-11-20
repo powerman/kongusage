@@ -4,4 +4,4 @@ bin "test"
 disable_help_flag #true
 flag "-h --help" help="Show context-sensitive help." action="help" global=#true
 flag "--name <STRING>" help="Name." env="TEST_NAME"
-flag "--usage-spec" help="Print usage spec (KDL) and exit." bool_value=#true
+flag "--usage-spec" help="Show usage spec (KDL)." bool_value=#true

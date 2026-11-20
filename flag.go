@@ -35,7 +35,7 @@ type Flag bool
 
 // Signature implements [kong.Signature].
 func (*Flag) Signature() string {
-	return `help:"Print usage spec (KDL) and exit."`
+	return `help:"Show usage spec (KDL)."`
 }
 
 // BeforeReset implements the Kong hook.

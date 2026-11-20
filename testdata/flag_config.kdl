@@ -5,6 +5,6 @@ disable_help_flag #true
 disable_help_subcommand #true
 flag "-h --help" help="Show context-sensitive help." action="help" global=#true
 flag "--name <STRING>" help="Name." global=#true env="TEST_NAME"
-flag "--usage-spec" help="Print usage spec (KDL) and exit." bool_value=#true global=#true
+flag "--usage-spec" help="Show usage spec (KDL)." bool_value=#true global=#true
 cmd "sub" help="Subcommand." disable_help_flag=#true
 cmd "other" help="Other subcommand." disable_help_flag=#true

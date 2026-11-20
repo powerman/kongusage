@@ -93,7 +93,7 @@ func TestFlag_Signature(tt *testing.T) {
 		cli     any
 		wantOut string
 	}{
-		{&testCLI{}, `(?m)^\s+--usage-spec\s+Print usage spec \(KDL\) and exit\.$`},
+		{&testCLI{}, `(?m)^\s+--usage-spec\s+Show usage spec \(KDL\)\.$`},
 		{&testHelpCLI{}, `(?m)^\s+--usage-spec\s+Custom\b`},
 	}
 	for _, tc := range tests {
